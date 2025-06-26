@@ -3,11 +3,14 @@ class SpacedRepetitionSystem {
     constructor() {
         this.cards = [];
         this.currentCardIndex = 0;
+        this.currentSessionCards = []; // Cartes de la vague actuelle
+        this.remainingCards = []; // Cartes qui doivent être redemandées
         this.sessionStats = {
             correct: 0,
             difficult: 0,
             incorrect: 0,
-            total: 0
+            total: 0,
+            totalAttempts: 0 // Nombre total de tentatives (avec répétitions)
         };
         this.loadProgress();
     }
@@ -107,24 +110,96 @@ class SpacedRepetitionSystem {
 
     // Obtient la carte actuelle
     getCurrentCard() {
-        return this.cards[this.currentCardIndex];
+        return this.getNextSessionCard();
     }
 
     // Passe à la carte suivante
     nextCard() {
         this.currentCardIndex++;
-        return this.currentCardIndex < this.cards.length;
+        return !this.isSessionComplete();
     }
 
     // Remet à zéro la session
     resetSession() {
         this.currentCardIndex = 0;
+        this.currentSessionCards = [];
+        this.remainingCards = [];
         this.sessionStats = {
             correct: 0,
             difficult: 0,
             incorrect: 0,
-            total: 0
+            total: 0,
+            totalAttempts: 0
         };
+        // Initialiser la session avec un ordre aléatoire
+        this.initializeRandomSession();
+    }
+
+    // Mélange aléatoirement un tableau (algorithme Fisher-Yates)
+    shuffleArray(array) {
+        const shuffled = [...array]; // Créer une copie pour ne pas modifier l'original
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+
+    // Mélange aléatoirement les cartes
+    shuffleCards() {
+        for (let i = this.cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+        }
+    }
+
+    // Initialise une session avec un ordre complètement aléatoire
+    initializeRandomSession() {
+        // Mélanger complètement les cartes
+        this.shuffleCards();
+        // Initialiser les cartes restantes à réviser
+        this.remainingCards = [...this.cards];
+        this.currentSessionCards = [];
+    }
+
+    // Ajoute une carte ratée à la fin de la session
+    addFailedCardToEnd(card) {
+        // Marquer la carte comme à revoir
+        card.needsReview = true;
+        // L'ajouter à la fin des cartes restantes
+        this.remainingCards.push(card);
+    }
+
+    // Obtient la prochaine carte de la session
+    getNextSessionCard() {
+        if (this.currentCardIndex < this.currentSessionCards.length) {
+            return this.currentSessionCards[this.currentCardIndex];
+        }
+        
+        // Si on a fini les cartes actuelles, préparer la prochaine vague
+        if (this.remainingCards.length > 0) {
+            // Prendre toutes les cartes restantes pour cette vague
+            this.currentSessionCards = [...this.remainingCards];
+            this.remainingCards = [];
+            this.currentCardIndex = 0;
+            
+            // Mélanger cette nouvelle vague
+            for (let i = this.currentSessionCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [this.currentSessionCards[i], this.currentSessionCards[j]] = 
+                [this.currentSessionCards[j], this.currentSessionCards[i]];
+            }
+            
+            return this.currentSessionCards[this.currentCardIndex];
+        }
+        
+        return null; // Session terminée
+    }
+
+    // Vérifie si la session est terminée
+    isSessionComplete() {
+        return this.currentCardIndex >= this.currentSessionCards.length && 
+               this.remainingCards.length === 0;
     }
 }
 
@@ -744,7 +819,7 @@ Partie 5;;;;`;
                 parts.push(`${niveaux.size} niveau(x)`);
             }
             if (thematiques.size > 0) {
-                parts.push(`${thematiques.size} thématique(s)`);
+                parts.push`${thematiques.size} thématique(s)`;
             }
             parts.push(`${totalSelected} partie(s)`);
             
@@ -769,7 +844,8 @@ Partie 5;;;;`;
         // Initialiser le système de révision
         this.srs.cards = [];
         this.filteredData.forEach(item => this.srs.addCard(item));
-        this.srs.sortCards();
+        
+        // Démarrer une session avec ordre aléatoire et répétition des cartes ratées
         this.srs.resetSession();
 
         this.showScreen('revision');
@@ -792,10 +868,18 @@ Partie 5;;;;`;
 
         this.updateCurrentCardDisplay();
 
-        // Mettre à jour la progression
-        const progress = ((this.srs.currentCardIndex) / this.srs.cards.length) * 100;
+        // Mettre à jour la progression (basée sur les cartes uniques terminées)
+        const uniqueCardsTotal = this.filteredData.length;
+        const cardsCompleted = this.srs.sessionStats.total;
+        const progress = (cardsCompleted / uniqueCardsTotal) * 100;
         this.elements.progressFill.style.width = `${progress}%`;
-        this.elements.progressText.textContent = `${this.srs.currentCardIndex} / ${this.srs.cards.length}`;
+        this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} cartes maîtrisées`;
+
+        // Afficher aussi le nombre total d'essais
+        const totalAttempts = this.srs.sessionStats.totalAttempts;
+        if (totalAttempts > uniqueCardsTotal) {
+            this.elements.progressText.textContent += ` (${totalAttempts} essais)`;
+        }
 
         // Mettre à jour les statistiques
         this.updateSessionStats();
@@ -812,11 +896,25 @@ Partie 5;;;;`;
             existingIndicator.remove();
         }
 
+        // Retirer l'indicateur de répétition existant s'il existe
+        const existingRepeatIndicator = this.elements.flashcard.querySelector('.card-repeat-indicator');
+        if (existingRepeatIndicator) {
+            existingRepeatIndicator.remove();
+        }
+
         // Ajouter l'indicateur de mode
         const modeIndicator = document.createElement('div');
         modeIndicator.className = `card-mode-indicator ${this.reverseMode ? 'reverse' : ''}`;
         modeIndicator.textContent = this.reverseMode ? 'FR → AR' : 'AR → FR';
         this.elements.flashcard.appendChild(modeIndicator);
+
+        // Ajouter l'indicateur de répétition si la carte revient
+        if (card.needsReview) {
+            const repeatIndicator = document.createElement('div');
+            repeatIndicator.className = 'card-repeat-indicator';
+            repeatIndicator.textContent = '🔄 Répétition';
+            this.elements.flashcard.appendChild(repeatIndicator);
+        }
 
         if (this.reverseMode) {
             // Mode inversé : afficher la traduction française
@@ -870,18 +968,18 @@ Partie 5;;;;`;
         } else if (card.type === 'verbes') {
             if (this.reverseMode) {
                 this.elements.additionalInfo.innerHTML = `
-                    <div><strong>Passé:</strong> ${card.arabic}</div>
-                    <div><strong>Présent:</strong> ${card.present}</div>
-                    <div><strong>Impératif:</strong> ${card.imperative}</div>
-                    <div><strong>Masdar:</strong> ${card.masdar}</div>
-                    <div><strong>Traduction:</strong> ${card.translation}</div>
+                    <div><strong>الماضي :</strong> ${card.arabic}</div>
+                    <div><strong>المضارع :</strong> ${card.present}</div>
+                    <div><strong>الأمر :</strong> ${card.imperative}</div>
+                    <div><strong>المصدر :</strong> ${card.masdar}</div>
+                    <div><strong>الترجمة :</strong> ${card.translation}</div>
                 `;
             } else {
                 this.elements.additionalInfo.innerHTML = `
-                    <div><strong>Passé:</strong> ${card.arabic}</div>
-                    <div><strong>Présent:</strong> ${card.present}</div>
-                    <div><strong>Impératif:</strong> ${card.imperative}</div>
-                    <div><strong>Masdar:</strong> ${card.masdar}</div>
+                    <div><strong>الماضي :</strong> ${card.arabic}</div>
+                    <div><strong>المضارع :</strong> ${card.present}</div>
+                    <div><strong>الأمر :</strong> ${card.imperative}</div>
+                    <div><strong>المصدر :</strong> ${card.masdar}</div>
                 `;
             }
         }
@@ -898,11 +996,26 @@ Partie 5;;;;`;
         this.srs.updateCardProgress(card.id, score);
 
         // Mettre à jour les statistiques de session
-        if (score === 0) this.srs.sessionStats.incorrect++;
-        else if (score === 1) this.srs.sessionStats.difficult++;
-        else this.srs.sessionStats.correct++;
+        this.srs.sessionStats.totalAttempts++;
         
-        this.srs.sessionStats.total++;
+        if (score === 0) {
+            this.srs.sessionStats.incorrect++;
+            // Carte incorrecte : la remettre en fin de pile
+            this.srs.addFailedCardToEnd(card);
+        } else if (score === 1) {
+            this.srs.sessionStats.difficult++;
+            // Carte difficile : la remettre en fin de pile aussi
+            this.srs.addFailedCardToEnd(card);
+        } else {
+            this.srs.sessionStats.correct++;
+            // Carte réussie : ne pas la remettre
+        }
+
+        // Ne compter chaque carte unique qu'une fois dans le total
+        if (!card.countedInTotal) {
+            this.srs.sessionStats.total++;
+            card.countedInTotal = true;
+        }
 
         // Passer à la carte suivante
         if (this.srs.nextCard()) {
