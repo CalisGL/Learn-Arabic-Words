@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Révision Vocabulaire Arabe</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🌙 Révision Vocabulaire Arabe</h1>
+            <p>Maîtrisez le vocabulaire arabe avec un système de répétition espacée</p>
+        </header>
+
+        <!-- Écran de sélection -->
+        <div id="selection-screen" class="screen active">
+            <div class="selection-container">
+                <h2>Choisissez votre mode de révision</h2>
+                
+                <!-- Sélection du type -->
+                <div class="type-selection">
+                    <button class="type-btn" data-type="mots">
+                        📚 Mots Classiques
+                        <span>Noms, adjectifs et vocabulaire général</span>
+                    </button>
+                    <button class="type-btn" data-type="verbes">
+                        🔄 Verbes
+                        <span>Conjugaisons et formes verbales</span>
+                    </button>
+                </div>
+
+                <!-- Sélection des filtres -->
+                <div id="filters" class="filters hidden">
+                    <div class="filter-header-main">
+                        <h3>🎯 Sélection du vocabulaire</h3>
+                        <div class="selection-summary">
+                            <span id="selection-count">Aucune sélection</span>
+                        </div>
+                    </div>
+
+                    <div id="hierarchical-selection" class="hierarchical-container">
+                        <!-- Les sections par niveau seront générées dynamiquement -->
+                    </div>
+                    
+                    <button id="start-btn" class="start-btn" disabled>Commencer la révision</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Écran de révision -->
+        <div id="revision-screen" class="screen">
+            <div class="revision-container">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                    <span id="progress-text">0 / 0</span>
+                </div>
+
+                <div class="card-container">
+                    <div class="flashcard" id="flashcard">
+                        <div class="card-front">
+                            <div class="arabic-text" id="arabic-text"></div>
+                            <div class="card-info">
+                                <span id="card-type"></span>
+                                <span id="difficulty-indicator"></span>
+                            </div>
+                        </div>
+                        <div class="card-back hidden">
+                            <div id="translation-text"></div>
+                            <div id="additional-info"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="mode-selector">
+                        <label class="mode-toggle">
+                            <input type="checkbox" id="reverse-mode">
+                            <span class="toggle-slider"></span>
+                            <span class="mode-label">Mode inversé (Français → Arabe)</span>
+                        </label>
+                    </div>
+                    
+                    <button id="reveal-btn" class="control-btn primary">Révéler la réponse</button>
+                    <div id="answer-buttons" class="answer-buttons hidden">
+                        <button class="answer-btn incorrect" data-score="0">❌ Incorrect</button>
+                        <button class="answer-btn difficult" data-score="1">😓 Difficile</button>
+                        <button class="answer-btn correct" data-score="2">✅ Correct</button>
+                        <button class="answer-btn easy" data-score="3">😊 Facile</button>
+                    </div>
+                </div>
+
+                <div class="session-info">
+                    <div class="stat">
+                        <span class="stat-label">Réussies:</span>
+                        <span id="correct-count">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Difficiles:</span>
+                        <span id="difficult-count">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Ratées:</span>
+                        <span id="incorrect-count">0</span>
+                    </div>
+                </div>
+
+                <button id="back-btn" class="back-btn">← Retour à la sélection</button>
+            </div>
+        </div>
+
+        <!-- Écran de résultats -->
+        <div id="results-screen" class="screen">
+            <div class="results-container">
+                <h2>🎉 Session terminée !</h2>
+                <div class="final-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="final-correct">0</div>
+                        <div class="stat-label">Réponses correctes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="final-total">0</div>
+                        <div class="stat-label">Total de cartes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="final-score">0%</div>
+                        <div class="stat-label">Score</div>
+                    </div>
+                </div>
+                <div class="result-actions">
+                    <button id="restart-btn" class="control-btn primary">Recommencer</button>
+                    <button id="new-selection-btn" class="control-btn">Nouvelle sélection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
