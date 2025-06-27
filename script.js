@@ -287,7 +287,7 @@ Partie 1;;
 حِوَارٌ;حِوَارَاتٌ;Dialogue
 Partie 2;;
 سَلَامٌ;;Paix
-رَحْمَةٌ;رَحْمَاتٌ;Miséricorde
+رَحْمَةٌ;رَحَمَاتٌ;Miséricorde
 بَرَكَةٌ;بَرَكَاتٌ;Bénédiction
 يَا;;Ô
 كَيْفَ;;Comment
@@ -299,8 +299,8 @@ Partie 2;;
 حَمْدٌ;;Louange
 سَعِيدٌ;سُعَدَاءُ;Heureux
 جِدًّا;;Très
-رُؤْيَةٌ;رُؤْىً;Vision/Vue
-شِقَّةٌ;شِقَقٌ;Appartement
+رُؤْيَةٌ;رُؤًى;Vision/Vue
+شَقَّةٌ;شُقَقٌ;Appartement
 الَّتِي;;Que
 مَعًا;;Ensemble
 Partie 3;;
