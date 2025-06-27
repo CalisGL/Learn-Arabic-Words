@@ -304,6 +304,16 @@ Partie 2;;
 الَّتِي;;Que
 مَعًا;;Ensemble
 Partie 3;;
+حَدِيثٌ;أَحَادِيثُ;Hadith
+نَبَوِيٌّ;;Prophétique
+رَجُلٌ;رِجَالٌ;Homme
+إِلَى;;Vers
+نَبِيٌّ;أَنْبِيَاءُ;Prophète
+ثُمَّ;;Ensuite
+عَشْرٌ;;10
+آخَرُ;آخَرُونَ;Autre
+عِشْرُونَ;;20
+ثَلَاثُونَ;;30
 Partie 4;;
 Partie 5;;
 Thématique 2;;
