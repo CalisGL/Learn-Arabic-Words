@@ -315,6 +315,19 @@ Partie 3;;
 عِشْرُونَ;;20
 ثَلَاثُونَ;;30
 Partie 4;;
+أَهْلًا وَسَهْلًا;;Bienvenue
+صَبَاحُ الْخَيْرِ;;Bonjour
+مَسَاءُ الْخَيْرِ;;Bonsoir
+لَيْلَةٌ سَعِيدَةٌ;;Bonne nuit
+تَصْبَحُ عَلَى خَيْرٍ;;Bonne nuit
+إِلَى اللِّقَاءِ;;À la prochaine
+أَرَاكَ غَدًا;;Je te vois demain
+أَرَاكَ لاَحِقًا;;Je te vois plus tard
+أَرَاكَ قَرِيبًا;;Je te vois bientôt
+نَلْتَقِي فِيمَا بَعْدُ;;On se voit plus tard
+مَعَ السَّلَامَةِ;;Au revoir
+فِي أَمَانِ اللَّهِ;;Sous la protection d'Allah
+وَدَاعًا;;À dieu
 Partie 5;;
 Thématique 2;;
 Partie 1;;

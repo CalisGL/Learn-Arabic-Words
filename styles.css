@@ -249,7 +249,7 @@ body {
 }
 
 .checkbox-label:hover input[type="checkbox"]:checked + .checkmark::after {
-    color: var(--primary-color);
+    color: var(--surface);
 }
 
 .selection-summary {
@@ -872,7 +872,7 @@ body {
 .niveau-content {
     display: none;
     padding: 1.5rem;
-    background-color: var(--text-secondary);
+    background: linear-gradient(135deg, rgb(36, 37, 37) 0%, rgb(36, 37, 37) 100%);
 }
 
 .niveau-section.expanded .niveau-content {
@@ -920,7 +920,7 @@ body {
 .thematique-content {
     display: none;
     padding: 1rem;
-    background: white;
+    background: var(--surface);
 }
 
 .thematique-section.expanded .thematique-content {
@@ -941,7 +941,7 @@ body {
     border-radius: 6px;
     transition: var(--transition);
     border: 1px solid var(--border-color);
-    background: var(--background);
+    background: var(--primary-color);
 }
 
 .partie-checkbox:hover {
@@ -998,7 +998,7 @@ body {
 }
 
 .expand-all-btn {
-    background: var(--text-secondary);
+    background: var(--primary-color);
     color: white;
     border: none;
     border-radius: 20px;
