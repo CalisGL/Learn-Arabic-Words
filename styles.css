@@ -669,6 +669,8 @@ body {
     margin-bottom: 1.5rem;
     display: flex;
     justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .mode-toggle {
@@ -1381,4 +1383,77 @@ body {
 #custom-selection-count {
     font-weight: 600;
     color: white;
+}
+
+/* ==========================================
+   Boutons audio ResponsiveVoice
+   ========================================== */
+
+.audio-btn {
+    position: absolute;
+    background: rgba(120, 93, 62, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+}
+
+.audio-btn:hover {
+    background: var(--primary-color);
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg);
+}
+
+.audio-btn:active {
+    transform: scale(0.95);
+}
+
+.audio-btn.playing {
+    background: var(--success-color);
+    animation: pulse-audio 1s infinite;
+}
+
+.front-audio {
+    top: 0.5rem;
+    left: 0.5rem;
+}
+
+.back-audio {
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+.arabic-audio {
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 10;
+}
+
+@keyframes pulse-audio {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive pour les boutons audio */
+@media (max-width: 480px) {
+    .audio-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
 }

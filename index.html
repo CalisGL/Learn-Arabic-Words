@@ -6,6 +6,7 @@
     <title>مراجعة المفردات العربية</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=YOUR_API_KEY"></script>
 </head>
 <body>
     <div class="container">
@@ -165,6 +166,9 @@
 
                 <div class="card-container">
                     <div class="flashcard" id="flashcard">
+                        <button class="audio-btn arabic-audio" id="arabic-audio-btn" title="Écouter la prononciation arabe">
+                            🔊
+                        </button>
                         <div class="card-front">
                             <div class="arabic-text" id="arabic-text"></div>
                             <div class="card-info">
@@ -185,6 +189,12 @@
                             <input type="checkbox" id="reverse-mode">
                             <span class="toggle-slider"></span>
                             <span class="mode-label">Mode inversé (Français → Arabe)</span>
+                        </label>
+                        
+                        <label class="mode-toggle">
+                            <input type="checkbox" id="auto-audio-mode">
+                            <span class="toggle-slider"></span>
+                            <span class="mode-label">Audio automatique 🔊</span>
                         </label>
                     </div>
                     
@@ -244,5 +254,6 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=RE4YNRdX"></script>
 </body>
 </html>

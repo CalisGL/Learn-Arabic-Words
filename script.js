@@ -218,7 +218,7 @@ class SpacedRepetitionSystem {
             if (!progress || progress.attempts === 0) return false;
             
             const failureRate = progress.failures / progress.attempts;
-            return failureRate > 0.5; // Plus de 50% d'échec
+            return failureRate > 0.3; // Plus de 30% d'échec
         });
 
         // Trie par taux d'échec décroissant
@@ -246,7 +246,7 @@ class SpacedRepetitionSystem {
         const difficultCards = this.getDifficultCards(allCards);
         
         if (difficultCards.length === 0) {
-            // Aucune carte difficile trouvée selon le critère strict (>50% échec)
+            // Aucune carte difficile trouvée selon le critère strict (>30% échec)
             // Ne pas faire de fallback, retourner 0 pour indiquer qu'il n'y a pas de cartes difficiles
             this.remainingCards = [];
             this.currentSessionCards = [];
@@ -282,6 +282,7 @@ class VocabApp {
         this.reverseMode = false;
         this.isIntensiveReview = false; // Initialiser le mode révision intensive
         this.customSelectedWords = new Set(); // Mots sélectionnés pour la révision personnalisée
+        this.autoAudioMode = false; // Mode audio automatique
 
         this.initializeElements();
         this.loadVocabularyData();
@@ -342,7 +343,10 @@ class VocabApp {
             customWordsContainer: document.getElementById('custom-words-container'),
             customWordsGrid: document.getElementById('custom-words-grid'),
             customSelectionCount: document.getElementById('custom-selection-count'),
-            startCustomBtn: document.getElementById('start-custom-btn')
+            startCustomBtn: document.getElementById('start-custom-btn'),
+            // Éléments audio
+            arabicAudioBtn: document.getElementById('arabic-audio-btn'),
+            autoAudioToggle: document.getElementById('auto-audio-mode')
         };
     }
 
@@ -359,7 +363,7 @@ Partie 1;;
 لُغَةٌ;لُغَاتٌ;Langue
 عَرَبِيَّةٌ;;Arabe
 بَعْدَ;;Après
-تَفْكِيرٍ;;Réflexion
+تَفْكِيرٌ;;Réflexion
 مِصْرُ;;Égypte
 حُلْمٌ;أَحْلَامٌ;Rêve
 هُوَ;;Il
@@ -693,11 +697,16 @@ Partie 5;;;;`;
             }
         });
 
+        // Mode audio automatique
+        this.elements.autoAudioToggle.addEventListener('change', () => {
+            this.autoAudioMode = this.elements.autoAudioToggle.checked;
+        });
+
         // Boutons de contrôle
         this.elements.startBtn.addEventListener('click', () => this.startRevision());
         this.elements.revealBtn.addEventListener('click', () => this.revealAnswer());
         this.elements.backBtn.addEventListener('click', () => this.showScreen('selection'));
-        this.elements.restartBtn.addEventListener('click', () => this.startRevision());
+        this.elements.restartBtn.addEventListener('click', () => this.restartCurrentSession());
         this.elements.newSelectionBtn.addEventListener('click', () => this.showScreen('selection'));
         this.elements.reviewDifficultBtn.addEventListener('click', () => this.startDifficultCardsReviewFromResults());
 
@@ -709,6 +718,12 @@ Partie 5;;;;`;
         this.elements.customTypeSelect.addEventListener('change', () => this.handleCustomTypeChange());
         this.elements.customThemeSelect.addEventListener('change', () => this.handleCustomThemeChange());
         this.elements.startCustomBtn.addEventListener('click', () => this.startCustomRevision());
+
+        // Boutons audio
+        this.elements.arabicAudioBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Empêcher la propagation vers la carte
+            this.playArabicAudio();
+        });
 
         // Boutons de réponse
         this.elements.answerButtons.addEventListener('click', (e) => {
@@ -1037,6 +1052,14 @@ Partie 5;;;;`;
 
         // Mettre à jour les statistiques
         this.updateSessionStats();
+
+        // Jouer l'audio automatiquement si le mode est activé
+        if (this.autoAudioMode) {
+            // Ajouter un petit délai pour que l'affichage soit complet
+            setTimeout(() => {
+                this.playArabicAudio();
+            }, 500);
+        }
     }
 
     // Met à jour l'affichage de la carte actuelle selon le mode
@@ -1267,7 +1290,7 @@ Partie 5;;;;`;
         }
         
         if (difficultCardsCount === 0) {
-            alert('Aucune carte difficile trouvée !\n\nSeules les cartes avec plus de 50% d\'échec sont considérées comme difficiles.\nCommencez quelques révisions pour accumuler des données ou révisez des cartes que vous avez déjà ratées.');
+            alert('Aucune carte difficile trouvée !\n\nSeules les cartes avec plus de 30% d\'échec sont considérées comme difficiles.\nCommencez quelques révisions pour accumuler des données ou révisez des cartes que vous avez déjà ratées.');
             return;
         }
 
@@ -1330,10 +1353,10 @@ Partie 5;;;;`;
             totalSuccesses += cardProgress.successes;
             totalFailures += cardProgress.failures;
 
-            // Carte difficile si taux d'échec > 50%
+            // Carte difficile si taux d'échec > 30%
             if (cardProgress.attempts > 0) {
                 const failureRate = cardProgress.failures / cardProgress.attempts;
-                if (failureRate > 0.5) {
+                if (failureRate > 0.3) {
                     difficultCards++;
                 }
             }
@@ -1388,6 +1411,84 @@ Partie 5;;;;`;
             this.updateStatsDisplay();
 
             alert('✅ Statistiques réinitialisées avec succès !');
+        }
+    }
+
+    // ==========================================
+    // Méthodes pour l'audio (ResponsiveVoice)
+    // ==========================================
+
+    // Joue l'audio du texte arabe uniquement
+    playArabicAudio() {
+        const card = this.srs.getCurrentCard();
+        if (!card) return;
+
+        // Toujours lire le texte arabe, peu importe le mode
+        const textToSpeak = card.arabic;
+        const voiceName = 'Arabic Male';
+        const language = 'ar-SA';
+
+        this.playAudio(textToSpeak, voiceName, language, this.elements.arabicAudioBtn);
+    }
+
+    // Méthode utilitaire pour jouer l'audio avec ResponsiveVoice
+    playAudio(text, voiceName, language, buttonElement) {
+        // Vérifier si ResponsiveVoice est disponible
+        if (typeof responsiveVoice === 'undefined') {
+            console.warn('ResponsiveVoice n\'est pas chargé. Utilisez votre propre clé API.');
+            alert('🔊 Fonctionnalité audio non disponible.\nVeuillez obtenir une clé API ResponsiveVoice et la configurer.');
+            return;
+        }
+
+        // Arrêter tout audio en cours
+        responsiveVoice.cancel();
+
+        // Ajouter l'animation au bouton
+        buttonElement.classList.add('playing');
+
+        // Jouer l'audio
+        responsiveVoice.speak(text, voiceName, {
+            rate: 0.8, // Vitesse de lecture (0.1 à 1.5)
+            pitch: 1, // Hauteur de la voix (0 à 2)
+            volume: 1, // Volume (0 à 1)
+            onstart: () => {
+                console.log(`🔊 Lecture audio démarrée: ${text}`);
+            },
+            onend: () => {
+                console.log('🔊 Lecture audio terminée');
+                buttonElement.classList.remove('playing');
+            },
+            onerror: (error) => {
+                console.error('Erreur audio:', error);
+                buttonElement.classList.remove('playing');
+                // Fallback vers d'autres voix disponibles
+                this.playAudioFallback(text, language, buttonElement);
+            }
+        });
+    }
+
+    // Méthode de fallback avec des voix alternatives
+    playAudioFallback(text, language, buttonElement) {
+        let fallbackVoice;
+        
+        if (language.startsWith('ar')) {
+            // Voix arabes alternatives
+            fallbackVoice = 'Arabic Female';
+        }
+
+        if (fallbackVoice) {
+            responsiveVoice.speak(text, fallbackVoice, {
+                rate: 0.8,
+                pitch: 1,
+                volume: 1,
+                onend: () => {
+                    buttonElement.classList.remove('playing');
+                },
+                onerror: () => {
+                    buttonElement.classList.remove('playing');
+                    console.warn('Aucune voix arabe disponible pour ce texte');
+                }
+            });
         }
     }
 
@@ -1584,6 +1685,21 @@ Partie 5;;;;`;
 
         this.showScreen('revision');
         this.showNextCard();
+    }
+
+    // Redémarre la session actuelle en gardant le même type et les mêmes filtres
+    restartCurrentSession() {
+        // Déterminer le type de session à redémarrer
+        if (this.isIntensiveReview) {
+            // Redémarrer une révision intensive
+            this.startDifficultCardsReview();
+        } else if (this.customSelectedWords && this.customSelectedWords.size > 0) {
+            // Redémarrer une révision personnalisée
+            this.startCustomRevision();
+        } else {
+            // Redémarrer une révision normale
+            this.startRevision();
+        }
     }
 }
 
