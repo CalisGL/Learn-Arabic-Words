@@ -1874,3 +1874,4 @@ window.hideCreateUserForm = function() {
         window.vocabApp.hideCreateUserForm();
     }
 };
+// j
