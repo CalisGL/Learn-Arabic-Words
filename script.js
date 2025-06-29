@@ -1714,7 +1714,7 @@ Partie 5;;;;`;
     }
     
     // Crée un nouvel utilisateur
-    createNewUser() {
+    async createNewUser() {
         const usernameInput = document.getElementById('new-username');
         const errorDiv = document.getElementById('create-user-error');
         const username = usernameInput.value.trim();
@@ -1736,13 +1736,19 @@ Partie 5;;;;`;
         }
         
         // Vérifier si l'utilisateur existe déjà
-        if (this.userExists(username)) {
-            this.showCreateUserError(`L'utilisateur "${username}" existe déjà`);
-            return;
+        try {
+            const exists = await this.userExists(username);
+            if (exists) {
+                this.showCreateUserError(`L'utilisateur "${username}" existe déjà`);
+                return;
+            }
+            
+            // Créer l'utilisateur
+            this.createUser(username);
+        } catch (error) {
+            console.error('Erreur lors de la vérification utilisateur:', error);
+            this.showCreateUserError('Erreur lors de la vérification. Réessayez.');
         }
-        
-        // Créer l'utilisateur
-        this.createUser(username);
     }
     
     // Crée un utilisateur avec les données initiales
@@ -1845,9 +1851,9 @@ window.hideCreateUserForm = function() {
     }
 };
 
-window.createNewUser = function() {
+window.createNewUser = async function() {
     if (window.vocabApp) {
-        window.vocabApp.createNewUser();
+        await window.vocabApp.createNewUser();
     }
 };
 
@@ -1860,11 +1866,5 @@ window.showCreateUserForm = function() {
 window.hideCreateUserForm = function() {
     if (window.vocabApp) {
         window.vocabApp.hideCreateUserForm();
-    }
-};
-
-window.createNewUser = function() {
-    if (window.vocabApp) {
-        window.vocabApp.createNewUser();
     }
 };
