@@ -229,6 +229,10 @@ class VocabApp {
         this.reverseMode = false;
         this.currentUser = null;
 
+        // Initialiser le gestionnaire GitHub
+        // REMPLACEZ 'VOTRE_USERNAME' et 'VOTRE_REPO' par vos vraies valeurs
+        this.githubManager = new GitHubUserManager('VOTRE_USERNAME', 'VOTRE_REPO');
+
         this.initializeElements();
         this.loadVocabularyData();
         this.setupEventListeners();
@@ -370,7 +374,7 @@ class VocabApp {
     }
 
     // Connexion de l'utilisateur
-    login() {
+    async login() {
         const username = this.elements.usernameInput.value.trim();
         if (!username) return;
         
@@ -385,18 +389,39 @@ class VocabApp {
             return;
         }
         
-        // Vérifier si l'utilisateur existe
-        if (!this.userExists(username)) {
-            this.showLoginError('Cet utilisateur n\'existe pas');
-            return;
-        }
+        // Effacer les messages d'erreur précédents
+        this.clearLoginError();
         
-        this.currentUser = username;
-        this.isAdmin = false;
-        localStorage.setItem('currentUser', username);
-        localStorage.removeItem('isAdmin');
-        this.saveRecentUser(username);
-        this.showLoggedInState();
+        // Afficher un indicateur de chargement
+        const originalText = this.elements.loginBtn.querySelector('span').textContent;
+        this.elements.loginBtn.querySelector('span').textContent = 'Vérification...';
+        this.elements.loginBtn.disabled = true;
+        
+        try {
+            // Vérifier si l'utilisateur existe
+            const exists = await this.userExists(username);
+            if (!exists) {
+                this.showLoginError(`L'utilisateur "${username}" n'existe pas. Contactez l'administrateur pour créer un compte.`);
+                return;
+            }
+            
+            // Mettre à jour la dernière connexion
+            await this.githubManager.updateLastLogin(username);
+            
+            this.currentUser = username;
+            this.isAdmin = false;
+            localStorage.setItem('currentUser', username);
+            localStorage.removeItem('isAdmin');
+            this.saveRecentUser(username);
+            this.showLoggedInState();
+        } catch (error) {
+            console.error('Erreur lors de la connexion:', error);
+            this.showLoginError('Erreur de connexion. Vérifiez votre connexion internet.');
+        } finally {
+            // Restaurer le bouton
+            this.elements.loginBtn.querySelector('span').textContent = originalText;
+            this.elements.loginBtn.disabled = false;
+        }
     }
 
     // Déconnexion
@@ -1275,78 +1300,82 @@ Partie 5;;;;`;
     }
 
     // Affiche le panneau d'administration
-    showAdminPanel() {
-        const users = this.getAllUsers();
-        
-        // Debug : afficher le contenu du localStorage
-        console.log('=== DEBUG ADMIN PANEL ===');
-        console.log('Utilisateurs trouvés:', users);
-        console.log('RecentUsers:', JSON.parse(localStorage.getItem('recentUsers') || '[]'));
-        console.log('Clés localStorage:', Object.keys(localStorage).filter(k => k.includes('arabic')));
-        
-        const overlay = document.createElement('div');
-        overlay.id = 'admin-overlay';
-        overlay.className = 'admin-overlay';
-        
-        overlay.innerHTML = `
-            <div class="admin-panel">
-                <div class="admin-header">
-                    <h2>🔧 Panneau d'Administration</h2>
-                    <button class="close-btn" onclick="closeAdminPanel()">✕</button>
-                </div>
-                
-                <div class="admin-content">
-                    <div class="admin-section">
-                        <h3>👥 Gestion des Utilisateurs (${users.length})</h3>
-                        <div class="admin-actions">
-                            <button class="admin-btn create-user" onclick="showCreateUserForm()">
-                                ➕ Créer un utilisateur
+    async showAdminPanel() {
+        try {
+            const users = await this.getAllUsers();
+            
+            // Debug : afficher le contenu
+            console.log('=== DEBUG ADMIN PANEL ===');
+            console.log('Utilisateurs trouvés:', users);
+            console.log('Source: GitHub + localStorage fallback');
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'admin-overlay';
+            overlay.className = 'admin-overlay';
+            
+            overlay.innerHTML = `
+                <div class="admin-panel">
+                    <div class="admin-header">
+                        <h2>🔧 Panneau d'Administration</h2>
+                        <button class="close-btn" onclick="closeAdminPanel()">✕</button>
+                    </div>
+                    
+                    <div class="admin-content">
+                        <div class="admin-section">
+                            <h3>👥 Gestion des Utilisateurs (${users.length})</h3>
+                            <div class="admin-actions">
+                                <button class="admin-btn create-user" onclick="showCreateUserForm()">
+                                    ➕ Créer un utilisateur
+                                </button>
+                            </div>
+                            <div class="users-list" id="admin-users-list">
+                                ${this.generateUsersHTML(users)}
+                            </div>
+                        </div>
+                        
+                        <div class="admin-section">
+                            <h3>📊 Statistiques Globales</h3>
+                            <div class="stats-grid">
+                                ${this.generateStatsHTML(users)}
+                            </div>
+                        </div>
+                        
+                        <div class="admin-section">
+                            <h3>🔍 Debug Info</h3>
+                            <div class="debug-info">
+                                <p><strong>Clés dans localStorage:</strong> ${Object.keys(localStorage).length}</p>
+                                <p><strong>Clés de progression:</strong> ${Object.keys(localStorage).filter(k => k.startsWith('arabicVocabProgress_')).length}</p>
+                                <p><strong>Utilisateurs récents:</strong> ${JSON.parse(localStorage.getItem('recentUsers') || '[]').length}</p>
+                                <details>
+                                    <summary>Voir toutes les clés</summary>
+                                    <pre style="font-size: 0.8rem; max-height: 150px; overflow-y: auto;">${Object.keys(localStorage).join('\\n')}</pre>
+                                </details>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-section danger-zone">
+                            <h3>⚠️ Zone Dangereuse</h3>
+                            <button class="danger-btn" onclick="confirmClearAll()">
+                                🗑️ Supprimer TOUS les comptes
                             </button>
                         </div>
-                        <div class="users-list" id="admin-users-list">
-                            ${this.generateUsersHTML(users)}
-                        </div>
                     </div>
                     
-                    <div class="admin-section">
-                        <h3>📊 Statistiques Globales</h3>
-                        <div class="stats-grid">
-                            ${this.generateStatsHTML(users)}
-                        </div>
-                    </div>
-                    
-                    <div class="admin-section">
-                        <h3>🔍 Debug Info</h3>
-                        <div class="debug-info">
-                            <p><strong>Clés dans localStorage:</strong> ${Object.keys(localStorage).length}</p>
-                            <p><strong>Clés de progression:</strong> ${Object.keys(localStorage).filter(k => k.startsWith('arabicVocabProgress_')).length}</p>
-                            <p><strong>Utilisateurs récents:</strong> ${JSON.parse(localStorage.getItem('recentUsers') || '[]').length}</p>
-                            <details>
-                                <summary>Voir toutes les clés</summary>
-                                <pre style="font-size: 0.8rem; max-height: 150px; overflow-y: auto;">${Object.keys(localStorage).join('\\n')}</pre>
-                            </details>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-section danger-zone">
-                        <h3>⚠️ Zone Dangereuse</h3>
-                        <button class="danger-btn" onclick="confirmClearAll()">
-                            🗑️ Supprimer TOUS les comptes
-                        </button>
+                    <div class="admin-footer">
+                        <button class="admin-btn secondary" onclick="closeAdminPanel()">Fermer</button>
+                        <button class="admin-btn primary" onclick="refreshAdminPanel()">🔄 Actualiser</button>
                     </div>
                 </div>
-                
-                <div class="admin-footer">
-                    <button class="admin-btn secondary" onclick="closeAdminPanel()">Fermer</button>
-                    <button class="admin-btn primary" onclick="refreshAdminPanel()">🔄 Actualiser</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(overlay);
-        
-        // Fermer avec Escape
-        document.addEventListener('keydown', this.handleAdminKeydown.bind(this));
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Fermer avec Escape
+            document.addEventListener('keydown', this.handleAdminKeydown.bind(this));
+        } catch (error) {
+            console.error('Erreur lors de l\'affichage du panneau admin:', error);
+            alert('Erreur lors du chargement du panneau d\'administration');
+        }
     }
 
     // Génère le HTML pour la liste des utilisateurs
@@ -1407,71 +1436,60 @@ Partie 5;;;;`;
     }
 
     // Récupère tous les utilisateurs
-    getAllUsers() {
-        const users = [];
-        const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
-        const foundUsers = new Set();
-        
-        // Scanner le localStorage pour tous les utilisateurs avec des données de progression
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('arabicVocabProgress_')) {
-                const username = key.replace('arabicVocabProgress_', '');
-                if (username !== 'Administrateur' && username !== 'default') { // Exclure l'admin et le défaut
-                    foundUsers.add(username);
+    async getAllUsers() {
+        try {
+            // Essayer de récupérer depuis GitHub
+            const gitHubUsers = await this.githubManager.getAllUsers();
+            return gitHubUsers;
+        } catch (error) {
+            console.error('Erreur GitHub, utilisation localStorage:', error);
+            
+            // Fallback vers localStorage
+            const users = [];
+            const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+            const foundUsers = new Set();
+            
+            // Scanner le localStorage pour tous les utilisateurs avec des données de progression
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('arabicVocabProgress_')) {
+                    const username = key.replace('arabicVocabProgress_', '');
+                    if (username !== 'Administrateur' && username !== 'default') {
+                        foundUsers.add(username);
+                    }
                 }
-            }
-        });
-        
-        // Ajouter les utilisateurs trouvés dans le localStorage avec leurs dernières connexions
-        foundUsers.forEach(username => {
-            const recentUser = recentUsers.find(u => {
-                // Gérer les anciens et nouveaux formats
-                const userName = typeof u === 'string' ? u : u.name;
-                return userName === username;
             });
             
-            users.push({
-                name: username,
-                lastLogin: recentUser && typeof recentUser === 'object' ? recentUser.lastLogin : null
-            });
-        });
-        
-        // Ajouter les utilisateurs récents qui n'ont pas encore de données de progression
-        recentUsers.forEach(user => {
-            const username = typeof user === 'string' ? user : user.name;
-            if (username !== 'Administrateur' && !foundUsers.has(username)) {
+            // Ajouter les utilisateurs trouvés dans le localStorage avec leurs dernières connexions
+            foundUsers.forEach(username => {
+                const recentUser = recentUsers.find(u => {
+                    const userName = typeof u === 'string' ? u : u.name;
+                    return userName === username;
+                });
+                
                 users.push({
                     name: username,
-                    lastLogin: typeof user === 'object' ? user.lastLogin : null
+                    lastLogin: recentUser && typeof recentUser === 'object' ? recentUser.lastLogin : null
                 });
-            }
-        });
-        
-        // Trier par dernière connexion (plus récent en premier)
-        return users.sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
+            });
+            
+            // Ajouter les utilisateurs récents qui n'ont pas encore de données de progression
+            recentUsers.forEach(user => {
+                const username = typeof user === 'string' ? user : user.name;
+                if (username !== 'Administrateur' && !foundUsers.has(username)) {
+                    users.push({
+                        name: username,
+                        lastLogin: typeof user === 'object' ? user.lastLogin : null
+                    });
+                }
+            });
+            
+            return users.sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
+        }
     }
 
     // Récupère les statistiques d'un utilisateur
     getUserProgress(username) {
-        const progressKey = `arabicVocabProgress_${username}`;
-        const progress = JSON.parse(localStorage.getItem(progressKey) || '{}');
-        
-        let totalAttempts = 0;
-        let totalSuccesses = 0;
-        
-        Object.values(progress).forEach(card => {
-            totalAttempts += card.attempts || 0;
-            totalSuccesses += card.successes || 0;
-        });
-        
-        const successRate = totalAttempts > 0 ? Math.round((totalSuccesses / totalAttempts) * 100) : 0;
-        
-        return {
-            totalAttempts,
-            totalSuccesses,
-            successRate,
-            cardsCount: Object.keys(progress).length
-        };
+        return this.githubManager.getUserProgress(username);
     }
 
     // Ferme le panneau admin
@@ -1630,19 +1648,8 @@ Partie 5;;;;`;
     // ===== GESTION DES UTILISATEURS =====
     
     // Vérifie si un utilisateur existe
-    userExists(username) {
-        // Vérifier dans les données de progression
-        const progressKey = `arabicVocabProgress_${username}`;
-        if (localStorage.getItem(progressKey)) {
-            return true;
-        }
-        
-        // Vérifier dans les utilisateurs récents
-        const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
-        return recentUsers.some(user => {
-            const userName = typeof user === 'string' ? user : user.name;
-            return userName === username;
-        });
+    async userExists(username) {
+        return await this.githubManager.userExists(username);
     }
     
     // Affiche un message d'erreur de connexion

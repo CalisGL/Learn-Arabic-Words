@@ -496,12 +496,9 @@ body {
     color: white;
     border-radius: var(--border-radius);
     padding: 1rem;
-    margin: 1.5rem 0;
+    margin: 1rem 0;
     text-align: center;
-}
-
-.summary-text {
-    font-weight: 500;
+    box-shadow: var(--shadow);
 }
 
 .filter-group {
@@ -1042,6 +1039,53 @@ body {
     }
 }
 
+@media (max-width: 768px) {
+    .hierarchical-container {
+        max-height: 60vh;
+    }
+    
+    .parties-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .niveau-header,
+    .thematique-header {
+        padding: 0.75rem;
+    }
+    
+    .niveau-content,
+    .thematique-content {
+        padding: 1rem;
+    }
+    
+    .partie-checkbox {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .partie-checkmark {
+        width: 16px;
+        height: 16px;
+        margin-right: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .parties-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .hierarchical-container {
+        max-height: 50vh;
+    }
+    
+    .expand-all-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* ===== PANNEAU D'ADMINISTRATION ===== */
 
 .admin-btn {
@@ -1529,8 +1573,6 @@ body {
     padding: 0.75rem;
     border-radius: 6px;
     margin-top: 1rem;
-    font-size: 0.85rem;
-    font-weight: 500;
 }
 
 @keyframes slideInFromTop {
@@ -1542,4 +1584,258 @@ body {
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+/* ===== INTERFACE HIÉRARCHIQUE NIVEAU > THÉMATIQUE > PARTIES ===== */
+
+.filter-header-main {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.filter-header-main h3 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.selection-summary {
+    background: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin: 1rem 0;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.hierarchical-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Sections de niveau */
+.niveau-section {
+    background: var(--background);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.niveau-section.expanded {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
+}
+
+.niveau-header {
+    background: linear-gradient(135deg, var(--primary-color), #8b6f3e);
+    color: white;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.niveau-header:hover {
+    background: linear-gradient(135deg, #8b6f3e, var(--primary-color));
+}
+
+.niveau-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.niveau-arrow {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+    font-weight: bold;
+}
+
+.niveau-section.expanded .niveau-arrow {
+    transform: rotate(90deg);
+}
+
+.niveau-content {
+    display: none;
+    padding: 1.5rem;
+    background: var(--surface);
+}
+
+.niveau-section.expanded .niveau-content {
+    display: block;
+}
+
+/* Sections de thématique */
+.thematique-section {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--background);
+}
+
+.thematique-section:last-child {
+    margin-bottom: 0;
+}
+
+.thematique-header {
+    background: linear-gradient(135deg, #d97706, var(--secondary-color));
+    color: white;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.thematique-header:hover {
+    background: linear-gradient(135deg, #d97706, var(--secondary-color));
+}
+
+.thematique-title {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.thematique-arrow {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+    font-weight: bold;
+}
+
+.thematique-section.expanded .thematique-arrow {
+    transform: rotate(90deg);
+}
+
+.thematique-content {
+    display: none;
+    padding: 1rem;
+    background: var(--background);
+}
+
+.thematique-section.expanded .thematique-content {
+    display: block;
+}
+
+/* Grille des parties */
+.parties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+/* Cases à cocher des parties */
+.partie-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.75rem;
+    border-radius: 6px;
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+    background: white;
+    position: relative;
+    user-select: none;
+}
+
+.partie-checkbox:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(120, 93, 62, 0.2);
+}
+
+.partie-checkbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.partie-checkmark {
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    margin-right: 0.75rem;
+    position: relative;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.partie-checkbox input[type="checkbox"]:checked + .partie-checkmark {
+    background: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.partie-checkbox input[type="checkbox"]:checked + .partie-checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.partie-checkbox:hover .partie-checkmark {
+    border-color: white;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.partie-checkbox:hover input[type="checkbox"]:checked + .partie-checkmark {
+    background: white;
+    border-color: white;
+}
+
+.partie-checkbox:hover input[type="checkbox"]:checked + .partie-checkmark::after {
+    color: var(--success-color);
+}
+
+/* Bouton tout développer/réduire */
+.expand-all-btn {
+    background: linear-gradient(135deg, var(--primary-color), #8b6f3e);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    align-self: flex-start;
+}
+
+.expand-all-btn:hover {
+    background: linear-gradient(135deg, #8b6f3e, var(--primary-color));
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
 }
