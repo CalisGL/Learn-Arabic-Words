@@ -12,18 +12,21 @@ class SpacedRepetitionSystem {
             total: 0,
             totalAttempts: 0 // Nombre total de tentatives (avec répétitions)
         };
+        this.userPrefix = 'default'; // Préfixe utilisateur pour la sauvegarde
         this.loadProgress();
     }
 
     // Charge les données de progression depuis le localStorage
     loadProgress() {
-        const saved = localStorage.getItem('arabicVocabProgress');
+        const storageKey = `arabicVocabProgress_${this.userPrefix}`;
+        const saved = localStorage.getItem(storageKey);
         this.progress = saved ? JSON.parse(saved) : {};
     }
 
     // Sauvegarde la progression
     saveProgress() {
-        localStorage.setItem('arabicVocabProgress', JSON.stringify(this.progress));
+        const storageKey = `arabicVocabProgress_${this.userPrefix}`;
+        localStorage.setItem(storageKey, JSON.stringify(this.progress));
     }
 
     // Ajoute une carte au système
@@ -224,21 +227,35 @@ class VocabApp {
             parties: new Set() // Format: "niveau|thematique|partie"
         };
         this.reverseMode = false;
+        this.currentUser = null;
 
         this.initializeElements();
         this.loadVocabularyData();
         this.setupEventListeners();
+        this.checkLoginStatus();
     }
 
     // Initialise les éléments DOM
     initializeElements() {
         this.screens = {
+            login: document.getElementById('login-screen'),
             selection: document.getElementById('selection-screen'),
             revision: document.getElementById('revision-screen'),
             results: document.getElementById('results-screen')
         };
 
         this.elements = {
+            // Éléments de connexion
+            usernameInput: document.getElementById('username'),
+            loginBtn: document.getElementById('login-btn'),
+            recentUsers: document.getElementById('recent-users'),
+            userList: document.getElementById('user-list'),
+            userInfo: document.getElementById('user-info'),
+            currentUsername: document.getElementById('current-username'),
+            logoutBtn: document.getElementById('logout-btn'),
+            header: document.querySelector('.header'),
+            
+            // Éléments existants
             typeButtons: document.querySelectorAll('.type-btn'),
             filters: document.getElementById('filters'),
             hierarchicalSelection: document.getElementById('hierarchical-selection'),
@@ -265,6 +282,143 @@ class VocabApp {
             finalTotal: document.getElementById('final-total'),
             finalScore: document.getElementById('final-score')
         };
+    }
+
+    // Vérifie l'état de connexion au démarrage
+    checkLoginStatus() {
+        const savedUser = localStorage.getItem('currentUser');
+        const isAdmin = localStorage.getItem('isAdmin') === 'true';
+        
+        if (savedUser) {
+            this.currentUser = savedUser;
+            this.isAdmin = isAdmin;
+            this.showLoggedInState();
+        } else {
+            this.showLoginScreen();
+        }
+        this.loadRecentUsers();
+    }
+
+    // Affiche l'état connecté
+    showLoggedInState() {
+        this.elements.currentUsername.textContent = this.currentUser;
+        this.elements.userInfo.style.display = 'flex';
+        this.elements.header.classList.add('logged-in');
+        
+        // Ajouter le bouton admin si administrateur
+        if (this.isAdmin) {
+            this.addAdminButton();
+        }
+        
+        this.showScreen('selection');
+        
+        // Adapter la sauvegarde pour l'utilisateur actuel
+        this.srs.userPrefix = this.currentUser;
+    }
+
+    // Affiche l'écran de connexion
+    showLoginScreen() {
+        this.elements.userInfo.style.display = 'none';
+        this.elements.header.classList.remove('logged-in');
+        this.showScreen('login');
+    }
+
+    // Charge les utilisateurs récents
+    loadRecentUsers() {
+        const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        if (recentUsers.length > 0) {
+            this.elements.recentUsers.style.display = 'block';
+            this.elements.userList.innerHTML = '';
+            
+            recentUsers.slice(0, 5).forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = 'user-item';
+                const username = typeof user === 'string' ? user : user.name;
+                userItem.innerHTML = `
+                    <span class="user-icon">👤</span>
+                    <span>${username}</span>
+                `;
+                userItem.onclick = () => this.selectUser(username);
+                this.elements.userList.appendChild(userItem);
+            });
+        }
+    }
+
+    // Sélectionne un utilisateur depuis la liste récente
+    selectUser(username) {
+        this.elements.usernameInput.value = username;
+        this.elements.loginBtn.disabled = false;
+    }
+
+    // Sauvegarde un utilisateur dans la liste récente
+    saveRecentUser(username) {
+        let recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        
+        // Supprimer l'utilisateur s'il existe déjà
+        recentUsers = recentUsers.filter(user => user.name !== username);
+        
+        // Ajouter en première position avec la date
+        recentUsers.unshift({
+            name: username,
+            lastLogin: Date.now()
+        });
+        
+        // Garder seulement les 5 derniers
+        recentUsers = recentUsers.slice(0, 5);
+        
+        localStorage.setItem('recentUsers', JSON.stringify(recentUsers));
+    }
+
+    // Connexion de l'utilisateur
+    login() {
+        const username = this.elements.usernameInput.value.trim();
+        if (!username) return;
+        
+        // Vérifier si c'est le code admin
+        if (username === 'Liska91240!') {
+            this.currentUser = 'Administrateur';
+            this.isAdmin = true;
+            localStorage.setItem('currentUser', 'Administrateur');
+            localStorage.setItem('isAdmin', 'true');
+            this.showLoggedInState();
+            this.showAdminPanel();
+            return;
+        }
+        
+        // Vérifier si l'utilisateur existe
+        if (!this.userExists(username)) {
+            this.showLoginError('Cet utilisateur n\'existe pas');
+            return;
+        }
+        
+        this.currentUser = username;
+        this.isAdmin = false;
+        localStorage.setItem('currentUser', username);
+        localStorage.removeItem('isAdmin');
+        this.saveRecentUser(username);
+        this.showLoggedInState();
+    }
+
+    // Déconnexion
+    logout() {
+        this.currentUser = null;
+        this.isAdmin = false;
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('isAdmin');
+        this.showLoginScreen();
+        
+        // Réinitialiser l'application
+        this.currentType = null;
+        this.selectedFilters.parties.clear();
+        if (this.elements.filters) {
+            this.elements.filters.classList.add('hidden');
+        }
+        
+        // Supprimer le bouton admin s'il existe
+        const adminBtn = document.getElementById('admin-btn');
+        if (adminBtn) {
+            adminBtn.remove();
+        }
     }
 
     // Charge les données de vocabulaire depuis les CSV intégrés
@@ -598,13 +752,26 @@ Partie 5;;;;`;
 
     // Configure les écouteurs d'événements
     setupEventListeners() {
+        // Écouteurs de connexion
+        this.elements.usernameInput.addEventListener('input', () => {
+            const username = this.elements.usernameInput.value.trim();
+            this.elements.loginBtn.disabled = username.length === 0;
+        });
+
+        this.elements.usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !this.elements.loginBtn.disabled) {
+                this.login();
+            }
+        });
+
+        this.elements.loginBtn.addEventListener('click', () => this.login());
+        this.elements.logoutBtn.addEventListener('click', () => this.logout());
+
         // Sélection du type
         this.elements.typeButtons.forEach(btn => {
             btn.addEventListener('click', () => this.selectType(btn.dataset.type));
         });
 
-        // Filtres - plus d'événements nécessaires car tout sera dynamique
-        
         // Mode inversé
         this.elements.reverseModeToggle.addEventListener('change', () => {
             this.reverseMode = this.elements.reverseModeToggle.checked;
@@ -1089,9 +1256,608 @@ Partie 5;;;;`;
         });
         this.screens[screenName].classList.add('active');
     }
+
+    // ===== ADMINISTRATION =====
+    
+    // Ajoute le bouton admin dans l'interface
+    addAdminButton() {
+        // Éviter les doublons
+        if (document.getElementById('admin-btn')) return;
+        
+        const adminBtn = document.createElement('button');
+        adminBtn.id = 'admin-btn';
+        adminBtn.className = 'admin-btn';
+        adminBtn.innerHTML = '⚙️ Admin';
+        adminBtn.title = 'Panneau d\'administration';
+        adminBtn.onclick = () => this.showAdminPanel();
+        
+        this.elements.userInfo.appendChild(adminBtn);
+    }
+
+    // Affiche le panneau d'administration
+    showAdminPanel() {
+        const users = this.getAllUsers();
+        
+        // Debug : afficher le contenu du localStorage
+        console.log('=== DEBUG ADMIN PANEL ===');
+        console.log('Utilisateurs trouvés:', users);
+        console.log('RecentUsers:', JSON.parse(localStorage.getItem('recentUsers') || '[]'));
+        console.log('Clés localStorage:', Object.keys(localStorage).filter(k => k.includes('arabic')));
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'admin-overlay';
+        overlay.className = 'admin-overlay';
+        
+        overlay.innerHTML = `
+            <div class="admin-panel">
+                <div class="admin-header">
+                    <h2>🔧 Panneau d'Administration</h2>
+                    <button class="close-btn" onclick="closeAdminPanel()">✕</button>
+                </div>
+                
+                <div class="admin-content">
+                    <div class="admin-section">
+                        <h3>👥 Gestion des Utilisateurs (${users.length})</h3>
+                        <div class="admin-actions">
+                            <button class="admin-btn create-user" onclick="showCreateUserForm()">
+                                ➕ Créer un utilisateur
+                            </button>
+                        </div>
+                        <div class="users-list" id="admin-users-list">
+                            ${this.generateUsersHTML(users)}
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>📊 Statistiques Globales</h3>
+                        <div class="stats-grid">
+                            ${this.generateStatsHTML(users)}
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>🔍 Debug Info</h3>
+                        <div class="debug-info">
+                            <p><strong>Clés dans localStorage:</strong> ${Object.keys(localStorage).length}</p>
+                            <p><strong>Clés de progression:</strong> ${Object.keys(localStorage).filter(k => k.startsWith('arabicVocabProgress_')).length}</p>
+                            <p><strong>Utilisateurs récents:</strong> ${JSON.parse(localStorage.getItem('recentUsers') || '[]').length}</p>
+                            <details>
+                                <summary>Voir toutes les clés</summary>
+                                <pre style="font-size: 0.8rem; max-height: 150px; overflow-y: auto;">${Object.keys(localStorage).join('\\n')}</pre>
+                            </details>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section danger-zone">
+                        <h3>⚠️ Zone Dangereuse</h3>
+                        <button class="danger-btn" onclick="confirmClearAll()">
+                            🗑️ Supprimer TOUS les comptes
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="admin-footer">
+                    <button class="admin-btn secondary" onclick="closeAdminPanel()">Fermer</button>
+                    <button class="admin-btn primary" onclick="refreshAdminPanel()">🔄 Actualiser</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        // Fermer avec Escape
+        document.addEventListener('keydown', this.handleAdminKeydown.bind(this));
+    }
+
+    // Génère le HTML pour la liste des utilisateurs
+    generateUsersHTML(users) {
+        if (users.length === 0) {
+            return '<div class="no-users">Aucun utilisateur trouvé</div>';
+        }
+        
+        return users.map(user => {
+            const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Jamais';
+            const progressData = this.getUserProgress(user.name);
+            
+            return `
+                <div class="user-card">
+                    <div class="user-info">
+                        <div class="user-name">👤 ${user.name}</div>
+                        <div class="user-details">
+                            <span>Dernière connexion: ${lastLogin}</span>
+                            <span>Progrès: ${progressData.totalAttempts} tentatives</span>
+                            <span>Réussite: ${progressData.successRate}%</span>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="action-btn view" onclick="viewUserDetails('${user.name}')">👁️ Voir</button>
+                        <button class="action-btn delete" onclick="confirmDeleteUser('${user.name}')">🗑️ Supprimer</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Génère le HTML pour les statistiques
+    generateStatsHTML(users) {
+        const totalUsers = users.length;
+        const totalAttempts = users.reduce((sum, user) => {
+            const progress = this.getUserProgress(user.name);
+            return sum + progress.totalAttempts;
+        }, 0);
+        
+        const activeUsers = users.filter(user => {
+            return user.lastLogin && (Date.now() - user.lastLogin) < (7 * 24 * 60 * 60 * 1000); // 7 jours
+        }).length;
+        
+        return `
+            <div class="stat-card">
+                <div class="stat-number">${totalUsers}</div>
+                <div class="stat-label">Utilisateurs total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">${activeUsers}</div>
+                <div class="stat-label">Actifs (7j)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">${totalAttempts}</div>
+                <div class="stat-label">Tentatives total</div>
+            </div>
+        `;
+    }
+
+    // Récupère tous les utilisateurs
+    getAllUsers() {
+        const users = [];
+        const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        const foundUsers = new Set();
+        
+        // Scanner le localStorage pour tous les utilisateurs avec des données de progression
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('arabicVocabProgress_')) {
+                const username = key.replace('arabicVocabProgress_', '');
+                if (username !== 'Administrateur' && username !== 'default') { // Exclure l'admin et le défaut
+                    foundUsers.add(username);
+                }
+            }
+        });
+        
+        // Ajouter les utilisateurs trouvés dans le localStorage avec leurs dernières connexions
+        foundUsers.forEach(username => {
+            const recentUser = recentUsers.find(u => {
+                // Gérer les anciens et nouveaux formats
+                const userName = typeof u === 'string' ? u : u.name;
+                return userName === username;
+            });
+            
+            users.push({
+                name: username,
+                lastLogin: recentUser && typeof recentUser === 'object' ? recentUser.lastLogin : null
+            });
+        });
+        
+        // Ajouter les utilisateurs récents qui n'ont pas encore de données de progression
+        recentUsers.forEach(user => {
+            const username = typeof user === 'string' ? user : user.name;
+            if (username !== 'Administrateur' && !foundUsers.has(username)) {
+                users.push({
+                    name: username,
+                    lastLogin: typeof user === 'object' ? user.lastLogin : null
+                });
+            }
+        });
+        
+        // Trier par dernière connexion (plus récent en premier)
+        return users.sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
+    }
+
+    // Récupère les statistiques d'un utilisateur
+    getUserProgress(username) {
+        const progressKey = `arabicVocabProgress_${username}`;
+        const progress = JSON.parse(localStorage.getItem(progressKey) || '{}');
+        
+        let totalAttempts = 0;
+        let totalSuccesses = 0;
+        
+        Object.values(progress).forEach(card => {
+            totalAttempts += card.attempts || 0;
+            totalSuccesses += card.successes || 0;
+        });
+        
+        const successRate = totalAttempts > 0 ? Math.round((totalSuccesses / totalAttempts) * 100) : 0;
+        
+        return {
+            totalAttempts,
+            totalSuccesses,
+            successRate,
+            cardsCount: Object.keys(progress).length
+        };
+    }
+
+    // Ferme le panneau admin
+    closeAdminPanel() {
+        const overlay = document.getElementById('admin-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        document.removeEventListener('keydown', this.handleAdminKeydown);
+    }
+
+    // Gère les touches dans le panneau admin
+    handleAdminKeydown(e) {
+        if (e.key === 'Escape') {
+            this.closeAdminPanel();
+        }
+    }
+
+    // Actualise le panneau admin
+    refreshAdminPanel() {
+        this.closeAdminPanel();
+        this.showAdminPanel();
+    }
+
+    // Confirme la suppression d'un utilisateur
+    confirmDeleteUser(username) {
+        console.log('=== DEBUG SUPPRESSION ===');
+        console.log('Tentative de suppression de:', username);
+        console.log('Clé de progression à supprimer:', `arabicVocabProgress_${username}`);
+        console.log('Existe dans localStorage:', localStorage.getItem(`arabicVocabProgress_${username}`) !== null);
+        
+        if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${username}" ?\n\nCette action est irréversible.`)) {
+            this.deleteUser(username);
+        }
+    }
+
+    // Supprime un utilisateur
+    deleteUser(username) {
+        console.log('=== SUPPRESSION EN COURS ===');
+        console.log('Suppression de l\'utilisateur:', username);
+        
+        // Supprimer les données de progression
+        const progressKey = `arabicVocabProgress_${username}`;
+        const existsBefore = localStorage.getItem(progressKey) !== null;
+        localStorage.removeItem(progressKey);
+        const existsAfter = localStorage.getItem(progressKey) !== null;
+        
+        console.log('Données de progression supprimées:', existsBefore, '→', existsAfter);
+        
+        // Supprimer de la liste des utilisateurs récents
+        let recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        console.log('Utilisateurs récents avant:', recentUsers);
+        
+        recentUsers = recentUsers.filter(user => {
+            const userName = typeof user === 'string' ? user : user.name;
+            return userName !== username;
+        });
+        
+        localStorage.setItem('recentUsers', JSON.stringify(recentUsers));
+        console.log('Utilisateurs récents après:', recentUsers);
+        
+        alert(`Utilisateur "${username}" supprimé avec succès !`);
+        this.refreshAdminPanel();
+    }
+
+    // Confirme la suppression de tous les comptes
+    confirmClearAll() {
+        const confirmation = prompt('Pour confirmer la suppression de TOUS les comptes, tapez exactement:\nSUPPRIMER TOUT');
+        
+        if (confirmation === 'SUPPRIMER TOUT') {
+            this.clearAllUsers();
+        } else if (confirmation !== null) {
+            alert('Confirmation incorrecte. Suppression annulée.');
+        }
+    }
+
+    // Supprime tous les utilisateurs
+    clearAllUsers() {
+        let deletedCount = 0;
+        
+        // Supprimer tous les comptes (sauf admin)
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('arabicVocabProgress_') && !key.includes('Administrateur')) {
+                localStorage.removeItem(key);
+                deletedCount++;
+            }
+        });
+        
+        // Vider la liste des utilisateurs récents
+        localStorage.setItem('recentUsers', '[]');
+        
+        alert(`${deletedCount} compte(s) supprimé(s) avec succès !`);
+        this.refreshAdminPanel();
+    }
+
+    // Affiche les détails d'un utilisateur
+    viewUserDetails(username) {
+        const progress = this.getUserProgress(username);
+        const progressData = JSON.parse(localStorage.getItem(`arabicVocabProgress_${username}`) || '{}');
+        
+        let detailsHTML = `
+            <div class="user-details-modal">
+                <h3>📊 Détails - ${username}</h3>
+                <div class="details-stats">
+                    <p><strong>Cartes étudiées:</strong> ${progress.cardsCount}</p>
+                    <p><strong>Tentatives totales:</strong> ${progress.totalAttempts}</p>
+                    <p><strong>Réussites:</strong> ${progress.totalSuccesses}</p>
+                    <p><strong>Taux de réussite:</strong> ${progress.successRate}%</p>
+                </div>
+                
+                <h4>Cartes les plus difficiles:</h4>
+                <div class="difficult-cards">
+        `;
+        
+        // Trouver les cartes les plus difficiles
+        const cards = Object.entries(progressData)
+            .map(([id, data]) => ({
+                id: id.split('_').pop(), // Dernière partie de l'ID
+                failures: data.failures || 0,
+                attempts: data.attempts || 0,
+                failureRate: data.attempts > 0 ? Math.round((data.failures / data.attempts) * 100) : 0
+            }))
+            .filter(card => card.attempts > 0)
+            .sort((a, b) => b.failureRate - a.failureRate)
+            .slice(0, 5);
+            
+        if (cards.length > 0) {
+            cards.forEach(card => {
+                detailsHTML += `<p>• ${card.id} - ${card.failureRate}% d'échecs (${card.failures}/${card.attempts})</p>`;
+            });
+        } else {
+            detailsHTML += '<p>Aucune donnée disponible</p>';
+        }
+        
+        detailsHTML += `
+                </div>
+                <button onclick="closeUserDetails()" class="close-details-btn">Fermer</button>
+            </div>
+        `;
+        
+        const modal = document.createElement('div');
+        modal.id = 'user-details-modal';
+        modal.className = 'user-details-overlay';
+        modal.innerHTML = detailsHTML;
+        document.body.appendChild(modal);
+    }
+
+    // Ferme les détails utilisateur
+    closeUserDetails() {
+        const modal = document.getElementById('user-details-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // ===== GESTION DES UTILISATEURS =====
+    
+    // Vérifie si un utilisateur existe
+    userExists(username) {
+        // Vérifier dans les données de progression
+        const progressKey = `arabicVocabProgress_${username}`;
+        if (localStorage.getItem(progressKey)) {
+            return true;
+        }
+        
+        // Vérifier dans les utilisateurs récents
+        const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        return recentUsers.some(user => {
+            const userName = typeof user === 'string' ? user : user.name;
+            return userName === username;
+        });
+    }
+    
+    // Affiche un message d'erreur de connexion
+    showLoginError(message) {
+        // Supprimer le message précédent s'il existe
+        this.clearLoginError();
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'login-error';
+        errorDiv.id = 'login-error';
+        errorDiv.textContent = message;
+        
+        // Insérer après le bouton de connexion
+        const loginBtn = this.elements.loginBtn;
+        loginBtn.parentNode.insertBefore(errorDiv, loginBtn.nextSibling);
+        
+        // Auto-effacement après 5 secondes
+        setTimeout(() => {
+            this.clearLoginError();
+        }, 5000);
+    }
+    
+    // Efface le message d'erreur de connexion
+    clearLoginError() {
+        const errorDiv = document.getElementById('login-error');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
+
+    // Affiche le formulaire de création d'utilisateur
+    showCreateUserForm() {
+        const formHTML = `
+            <div class="create-user-form" id="create-user-form">
+                <h4>➕ Créer un nouvel utilisateur</h4>
+                <div class="form-row">
+                    <label for="new-username">Nom d'utilisateur :</label>
+                    <input type="text" id="new-username" placeholder="Nom d'utilisateur..." maxlength="30">
+                </div>
+                <div class="form-actions">
+                    <button class="admin-btn secondary" onclick="hideCreateUserForm()">Annuler</button>
+                    <button class="admin-btn primary" onclick="createNewUser()">Créer</button>
+                </div>
+                <div id="create-user-error" class="create-user-error" style="display: none;"></div>
+            </div>
+        `;
+        
+        // Ajouter le formulaire après les actions
+        const actionsDiv = document.querySelector('.admin-actions');
+        if (actionsDiv) {
+            actionsDiv.insertAdjacentHTML('afterend', formHTML);
+            document.getElementById('new-username').focus();
+        }
+    }
+    
+    // Cache le formulaire de création d'utilisateur
+    hideCreateUserForm() {
+        const form = document.getElementById('create-user-form');
+        if (form) {
+            form.remove();
+        }
+    }
+    
+    // Crée un nouvel utilisateur
+    createNewUser() {
+        const usernameInput = document.getElementById('new-username');
+        const errorDiv = document.getElementById('create-user-error');
+        const username = usernameInput.value.trim();
+        
+        // Validation
+        if (!username) {
+            this.showCreateUserError('Veuillez saisir un nom d\'utilisateur');
+            return;
+        }
+        
+        if (username.length < 2) {
+            this.showCreateUserError('Le nom d\'utilisateur doit contenir au moins 2 caractères');
+            return;
+        }
+        
+        if (username === 'Liska91240!' || username === 'Administrateur') {
+            this.showCreateUserError('Ce nom d\'utilisateur est réservé');
+            return;
+        }
+        
+        // Vérifier si l'utilisateur existe déjà
+        if (this.userExists(username)) {
+            this.showCreateUserError(`L'utilisateur "${username}" existe déjà`);
+            return;
+        }
+        
+        // Créer l'utilisateur
+        this.createUser(username);
+    }
+    
+    // Crée un utilisateur avec les données initiales
+    createUser(username) {
+        // Créer une entrée vide de progression pour marquer l'existence
+        localStorage.setItem(`arabicVocabProgress_${username}`, '{}');
+        
+        // Ajouter à la liste des utilisateurs récents
+        let recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        
+        // Supprimer s'il existe déjà
+        recentUsers = recentUsers.filter(user => {
+            const userName = typeof user === 'string' ? user : user.name;
+            return userName !== username;
+        });
+        
+        // Ajouter le nouvel utilisateur
+        recentUsers.unshift({
+            name: username,
+            lastLogin: Date.now()
+        });
+        
+        // Garder seulement les 10 derniers (plus large pour les admins)
+        recentUsers = recentUsers.slice(0, 10);
+        
+        localStorage.setItem('recentUsers', JSON.stringify(recentUsers));
+        
+        // Masquer le formulaire et actualiser
+        this.hideCreateUserForm();
+        alert(`Utilisateur "${username}" créé avec succès !`);
+        this.refreshAdminPanel();
+    }
+    
+    // Affiche une erreur de création d'utilisateur
+    showCreateUserError(message) {
+        const errorDiv = document.getElementById('create-user-error');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Auto-effacement après 3 secondes
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+    }
 }
 
 // Initialiser l'application quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', () => {
-    new VocabApp();
+    window.vocabApp = new VocabApp();
 });
+
+// Fonctions globales pour le panneau d'administration
+window.closeAdminPanel = function() {
+    if (window.vocabApp) {
+        window.vocabApp.closeAdminPanel();
+    }
+};
+
+window.refreshAdminPanel = function() {
+    if (window.vocabApp) {
+        window.vocabApp.refreshAdminPanel();
+    }
+};
+
+window.confirmDeleteUser = function(username) {
+    if (window.vocabApp) {
+        window.vocabApp.confirmDeleteUser(username);
+    }
+};
+
+window.confirmClearAll = function() {
+    if (window.vocabApp) {
+        window.vocabApp.confirmClearAll();
+    }
+};
+
+window.viewUserDetails = function(username) {
+    if (window.vocabApp) {
+        window.vocabApp.viewUserDetails(username);
+    }
+};
+
+window.closeUserDetails = function() {
+    if (window.vocabApp) {
+        window.vocabApp.closeUserDetails();
+    }
+};
+
+window.showCreateUserForm = function() {
+    if (window.vocabApp) {
+        window.vocabApp.showCreateUserForm();
+    }
+};
+
+window.hideCreateUserForm = function() {
+    if (window.vocabApp) {
+        window.vocabApp.hideCreateUserForm();
+    }
+};
+
+window.createNewUser = function() {
+    if (window.vocabApp) {
+        window.vocabApp.createNewUser();
+    }
+};
+
+window.showCreateUserForm = function() {
+    if (window.vocabApp) {
+        window.vocabApp.showCreateUserForm();
+    }
+};
+
+window.hideCreateUserForm = function() {
+    if (window.vocabApp) {
+        window.vocabApp.hideCreateUserForm();
+    }
+};
+
+window.createNewUser = function() {
+    if (window.vocabApp) {
+        window.vocabApp.createNewUser();
+    }
+};
