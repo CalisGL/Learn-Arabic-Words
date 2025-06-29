@@ -12,21 +12,18 @@ class SpacedRepetitionSystem {
             total: 0,
             totalAttempts: 0 // Nombre total de tentatives (avec répétitions)
         };
-        this.userPrefix = 'default'; // Préfixe utilisateur pour la sauvegarde
         this.loadProgress();
     }
 
     // Charge les données de progression depuis le localStorage
     loadProgress() {
-        const storageKey = `arabicVocabProgress_${this.userPrefix}`;
-        const saved = localStorage.getItem(storageKey);
+        const saved = localStorage.getItem('arabicVocabProgress');
         this.progress = saved ? JSON.parse(saved) : {};
     }
 
     // Sauvegarde la progression
     saveProgress() {
-        const storageKey = `arabicVocabProgress_${this.userPrefix}`;
-        localStorage.setItem(storageKey, JSON.stringify(this.progress));
+        localStorage.setItem('arabicVocabProgress', JSON.stringify(this.progress));
     }
 
     // Ajoute une carte au système
@@ -211,6 +208,62 @@ class SpacedRepetitionSystem {
         return this.currentCardIndex >= this.currentSessionCards.length && 
                this.remainingCards.length === 0;
     }
+
+    // Obtient les cartes avec le plus haut taux d'échec pour la révision intensive
+    getDifficultCards(cards, maxCards = 20) {
+        // Filtre les cartes qui sont considérées comme difficiles (même critère que les statistiques)
+        const difficultCards = cards.filter(card => {
+            // Les cartes reçues ont déjà leurs données de progression attachées
+            const progress = card.progress;
+            if (!progress || progress.attempts === 0) return false;
+            
+            const failureRate = progress.failures / progress.attempts;
+            return failureRate > 0.5; // Plus de 50% d'échec
+        });
+
+        // Trie par taux d'échec décroissant
+        difficultCards.sort((a, b) => {
+            const aProgress = a.progress;
+            const bProgress = b.progress;
+            
+            const aFailureRate = aProgress.attempts > 0 ? aProgress.failures / aProgress.attempts : 0;
+            const bFailureRate = bProgress.attempts > 0 ? bProgress.failures / bProgress.attempts : 0;
+            
+            // Si même taux d'échec, priorise les cartes avec plus d'échecs absolus
+            if (Math.abs(aFailureRate - bFailureRate) < 0.01) {
+                return bProgress.failures - aProgress.failures;
+            }
+            
+            return bFailureRate - aFailureRate;
+        });
+
+        // Retourne au maximum maxCards cartes
+        return difficultCards.slice(0, maxCards);
+    }
+
+    // Initialise une session de révision intensive avec les cartes difficiles
+    initializeDifficultCardsSession(allCards) {
+        const difficultCards = this.getDifficultCards(allCards);
+        
+        if (difficultCards.length === 0) {
+            // Aucune carte difficile trouvée selon le critère strict (>50% échec)
+            // Ne pas faire de fallback, retourner 0 pour indiquer qu'il n'y a pas de cartes difficiles
+            this.remainingCards = [];
+            this.currentSessionCards = [];
+            this.currentCardIndex = 0;
+            return 0;
+        } else {
+            this.remainingCards = [...difficultCards];
+        }
+        
+        this.currentSessionCards = [];
+        this.currentCardIndex = 0;
+        
+        // Mélanger les cartes difficiles
+        this.shuffleArray(this.remainingCards);
+        
+        return this.remainingCards.length;
+    }
 }
 
 // Classe principale de l'application
@@ -227,39 +280,24 @@ class VocabApp {
             parties: new Set() // Format: "niveau|thematique|partie"
         };
         this.reverseMode = false;
-        this.currentUser = null;
-
-        // Initialiser le gestionnaire GitHub
-        // REMPLACEZ 'VOTRE_USERNAME' et 'VOTRE_REPO' par vos vraies valeurs
-        this.githubManager = new GitHubUserManager('VOTRE_USERNAME', 'VOTRE_REPO');
+        this.isIntensiveReview = false; // Initialiser le mode révision intensive
+        this.customSelectedWords = new Set(); // Mots sélectionnés pour la révision personnalisée
 
         this.initializeElements();
         this.loadVocabularyData();
         this.setupEventListeners();
-        this.checkLoginStatus();
+        this.updateStatsDisplay(); // Charger les statistiques au démarrage
     }
 
     // Initialise les éléments DOM
     initializeElements() {
         this.screens = {
-            login: document.getElementById('login-screen'),
             selection: document.getElementById('selection-screen'),
             revision: document.getElementById('revision-screen'),
             results: document.getElementById('results-screen')
         };
 
         this.elements = {
-            // Éléments de connexion
-            usernameInput: document.getElementById('username'),
-            loginBtn: document.getElementById('login-btn'),
-            recentUsers: document.getElementById('recent-users'),
-            userList: document.getElementById('user-list'),
-            userInfo: document.getElementById('user-info'),
-            currentUsername: document.getElementById('current-username'),
-            logoutBtn: document.getElementById('logout-btn'),
-            header: document.querySelector('.header'),
-            
-            // Éléments existants
             typeButtons: document.querySelectorAll('.type-btn'),
             filters: document.getElementById('filters'),
             hierarchicalSelection: document.getElementById('hierarchical-selection'),
@@ -282,168 +320,30 @@ class VocabApp {
             backBtn: document.getElementById('back-btn'),
             restartBtn: document.getElementById('restart-btn'),
             newSelectionBtn: document.getElementById('new-selection-btn'),
+            reviewDifficultBtn: document.getElementById('review-difficult-btn'),
             finalCorrect: document.getElementById('final-correct'),
             finalTotal: document.getElementById('final-total'),
-            finalScore: document.getElementById('final-score')
+            finalScore: document.getElementById('final-score'),
+            // Éléments des statistiques
+            toggleStatsBtn: document.getElementById('toggle-stats-btn'),
+            statsContent: document.getElementById('stats-content'),
+            resetStatsBtn: document.getElementById('reset-stats-btn'),
+            totalAttempts: document.getElementById('total-attempts'),
+            totalSuccesses: document.getElementById('total-successes'),
+            totalFailures: document.getElementById('total-failures'),
+            successRate: document.getElementById('success-rate'),
+            difficultCards: document.getElementById('difficult-cards'),
+            masteredCards: document.getElementById('mastered-cards'),
+            // Éléments de la sélection personnalisée
+            customSelection: document.getElementById('custom-selection'),
+            customTypeSelect: document.getElementById('custom-type-select'),
+            customThemeContainer: document.getElementById('custom-theme-container'),
+            customThemeSelect: document.getElementById('custom-theme-select'),
+            customWordsContainer: document.getElementById('custom-words-container'),
+            customWordsGrid: document.getElementById('custom-words-grid'),
+            customSelectionCount: document.getElementById('custom-selection-count'),
+            startCustomBtn: document.getElementById('start-custom-btn')
         };
-    }
-
-    // Vérifie l'état de connexion au démarrage
-    checkLoginStatus() {
-        const savedUser = localStorage.getItem('currentUser');
-        const isAdmin = localStorage.getItem('isAdmin') === 'true';
-        
-        if (savedUser) {
-            this.currentUser = savedUser;
-            this.isAdmin = isAdmin;
-            this.showLoggedInState();
-        } else {
-            this.showLoginScreen();
-        }
-        this.loadRecentUsers();
-    }
-
-    // Affiche l'état connecté
-    showLoggedInState() {
-        this.elements.currentUsername.textContent = this.currentUser;
-        this.elements.userInfo.style.display = 'flex';
-        this.elements.header.classList.add('logged-in');
-        
-        // Ajouter le bouton admin si administrateur
-        if (this.isAdmin) {
-            this.addAdminButton();
-        }
-        
-        this.showScreen('selection');
-        
-        // Adapter la sauvegarde pour l'utilisateur actuel
-        this.srs.userPrefix = this.currentUser;
-    }
-
-    // Affiche l'écran de connexion
-    showLoginScreen() {
-        this.elements.userInfo.style.display = 'none';
-        this.elements.header.classList.remove('logged-in');
-        this.showScreen('login');
-    }
-
-    // Charge les utilisateurs récents
-    loadRecentUsers() {
-        const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
-        if (recentUsers.length > 0) {
-            this.elements.recentUsers.style.display = 'block';
-            this.elements.userList.innerHTML = '';
-            
-            recentUsers.slice(0, 5).forEach(user => {
-                const userItem = document.createElement('div');
-                userItem.className = 'user-item';
-                const username = typeof user === 'string' ? user : user.name;
-                userItem.innerHTML = `
-                    <span class="user-icon">👤</span>
-                    <span>${username}</span>
-                `;
-                userItem.onclick = () => this.selectUser(username);
-                this.elements.userList.appendChild(userItem);
-            });
-        }
-    }
-
-    // Sélectionne un utilisateur depuis la liste récente
-    selectUser(username) {
-        this.elements.usernameInput.value = username;
-        this.elements.loginBtn.disabled = false;
-    }
-
-    // Sauvegarde un utilisateur dans la liste récente
-    saveRecentUser(username) {
-        let recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
-        
-        // Supprimer l'utilisateur s'il existe déjà
-        recentUsers = recentUsers.filter(user => user.name !== username);
-        
-        // Ajouter en première position avec la date
-        recentUsers.unshift({
-            name: username,
-            lastLogin: Date.now()
-        });
-        
-        // Garder seulement les 5 derniers
-        recentUsers = recentUsers.slice(0, 5);
-        
-        localStorage.setItem('recentUsers', JSON.stringify(recentUsers));
-    }
-
-    // Connexion de l'utilisateur
-    async login() {
-        const username = this.elements.usernameInput.value.trim();
-        if (!username) return;
-        
-        // Vérifier si c'est le code admin
-        if (username === 'Liska91240!') {
-            this.currentUser = 'Administrateur';
-            this.isAdmin = true;
-            localStorage.setItem('currentUser', 'Administrateur');
-            localStorage.setItem('isAdmin', 'true');
-            this.showLoggedInState();
-            this.showAdminPanel();
-            return;
-        }
-        
-        // Effacer les messages d'erreur précédents
-        this.clearLoginError();
-        
-        // Afficher un indicateur de chargement
-        const originalText = this.elements.loginBtn.querySelector('span').textContent;
-        this.elements.loginBtn.querySelector('span').textContent = 'Vérification...';
-        this.elements.loginBtn.disabled = true;
-        
-        try {
-            // Vérifier si l'utilisateur existe
-            const exists = await this.userExists(username);
-            if (!exists) {
-                this.showLoginError(`L'utilisateur "${username}" n'existe pas. Contactez l'administrateur pour créer un compte.`);
-                return;
-            }
-            
-            // Mettre à jour la dernière connexion
-            await this.githubManager.updateLastLogin(username);
-            
-            this.currentUser = username;
-            this.isAdmin = false;
-            localStorage.setItem('currentUser', username);
-            localStorage.removeItem('isAdmin');
-            this.saveRecentUser(username);
-            this.showLoggedInState();
-        } catch (error) {
-            console.error('Erreur lors de la connexion:', error);
-            this.showLoginError('Erreur de connexion. Vérifiez votre connexion internet.');
-        } finally {
-            // Restaurer le bouton
-            this.elements.loginBtn.querySelector('span').textContent = originalText;
-            this.elements.loginBtn.disabled = false;
-        }
-    }
-
-    // Déconnexion
-    logout() {
-        this.currentUser = null;
-        this.isAdmin = false;
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('isAdmin');
-        this.showLoginScreen();
-        
-        // Réinitialiser l'application
-        this.currentType = null;
-        this.selectedFilters.parties.clear();
-        if (this.elements.filters) {
-            this.elements.filters.classList.add('hidden');
-        }
-        
-        // Supprimer le bouton admin s'il existe
-        const adminBtn = document.getElementById('admin-btn');
-        if (adminBtn) {
-            adminBtn.remove();
-        }
     }
 
     // Charge les données de vocabulaire depuis les CSV intégrés
@@ -777,26 +677,13 @@ Partie 5;;;;`;
 
     // Configure les écouteurs d'événements
     setupEventListeners() {
-        // Écouteurs de connexion
-        this.elements.usernameInput.addEventListener('input', () => {
-            const username = this.elements.usernameInput.value.trim();
-            this.elements.loginBtn.disabled = username.length === 0;
-        });
-
-        this.elements.usernameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !this.elements.loginBtn.disabled) {
-                this.login();
-            }
-        });
-
-        this.elements.loginBtn.addEventListener('click', () => this.login());
-        this.elements.logoutBtn.addEventListener('click', () => this.logout());
-
         // Sélection du type
         this.elements.typeButtons.forEach(btn => {
             btn.addEventListener('click', () => this.selectType(btn.dataset.type));
         });
 
+        // Filtres - plus d'événements nécessaires car tout sera dynamique
+        
         // Mode inversé
         this.elements.reverseModeToggle.addEventListener('change', () => {
             this.reverseMode = this.elements.reverseModeToggle.checked;
@@ -812,6 +699,16 @@ Partie 5;;;;`;
         this.elements.backBtn.addEventListener('click', () => this.showScreen('selection'));
         this.elements.restartBtn.addEventListener('click', () => this.startRevision());
         this.elements.newSelectionBtn.addEventListener('click', () => this.showScreen('selection'));
+        this.elements.reviewDifficultBtn.addEventListener('click', () => this.startDifficultCardsReviewFromResults());
+
+        // Statistiques
+        this.elements.toggleStatsBtn.addEventListener('click', () => this.toggleStats());
+        this.elements.resetStatsBtn.addEventListener('click', () => this.resetStats());
+
+        // Sélection personnalisée
+        this.elements.customTypeSelect.addEventListener('change', () => this.handleCustomTypeChange());
+        this.elements.customThemeSelect.addEventListener('change', () => this.handleCustomThemeChange());
+        this.elements.startCustomBtn.addEventListener('click', () => this.startCustomRevision());
 
         // Boutons de réponse
         this.elements.answerButtons.addEventListener('click', (e) => {
@@ -832,12 +729,32 @@ Partie 5;;;;`;
     selectType(type) {
         this.currentType = type;
         
+        // Réinitialiser le mode révision intensive
+        this.isIntensiveReview = false;
+        
         // Met à jour les boutons
         this.elements.typeButtons.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.type === type);
         });
 
-        // Affiche les filtres et les remplit
+        // Masquer tous les types de sélection
+        this.elements.filters.classList.add('hidden');
+        this.elements.customSelection.classList.add('hidden');
+
+        // Si c'est le mode révision intensive
+        if (type === 'revision') {
+            this.startDifficultCardsReview();
+            return;
+        }
+
+        // Si c'est le mode révision personnalisée
+        if (type === 'custom') {
+            this.elements.customSelection.classList.remove('hidden');
+            this.initializeCustomSelection();
+            return;
+        }
+
+        // Mode normal : affiche les filtres et les remplit
         this.elements.filters.classList.remove('hidden');
         this.populateFilters();
     }
@@ -1058,6 +975,9 @@ Partie 5;;;;`;
 
     // Démarre la révision
     startRevision() {
+        // Réinitialiser le mode révision intensive
+        this.isIntensiveReview = false;
+        
         // Filtrer les données selon les parties sélectionnées
         this.filteredData = this.vocabularyData[this.currentType].filter(item => {
             const partieKey = `${item.niveau}|${item.thematique}|${item.partie}`;
@@ -1101,7 +1021,13 @@ Partie 5;;;;`;
         const cardsCompleted = this.srs.sessionStats.total;
         const progress = (cardsCompleted / uniqueCardsTotal) * 100;
         this.elements.progressFill.style.width = `${progress}%`;
-        this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} cartes maîtrisées`;
+        
+        // Texte différent selon le mode
+        if (this.isIntensiveReview) {
+            this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} cartes difficiles maîtrisées`;
+        } else {
+            this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} cartes maîtrisées`;
+        }
 
         // Afficher aussi le nombre total d'essais
         const totalAttempts = this.srs.sessionStats.totalAttempts;
@@ -1130,11 +1056,25 @@ Partie 5;;;;`;
             existingRepeatIndicator.remove();
         }
 
+        // Retirer l'indicateur de révision intensive existant s'il existe
+        const existingIntensiveIndicator = this.elements.flashcard.querySelector('.card-intensive-indicator');
+        if (existingIntensiveIndicator) {
+            existingIntensiveIndicator.remove();
+        }
+
         // Ajouter l'indicateur de mode
         const modeIndicator = document.createElement('div');
         modeIndicator.className = `card-mode-indicator ${this.reverseMode ? 'reverse' : ''}`;
         modeIndicator.textContent = this.reverseMode ? 'FR → AR' : 'AR → FR';
         this.elements.flashcard.appendChild(modeIndicator);
+
+        // Ajouter l'indicateur de révision intensive si c'est le cas
+        if (this.isIntensiveReview) {
+            const intensiveIndicator = document.createElement('div');
+            intensiveIndicator.className = 'card-intensive-indicator';
+            intensiveIndicator.textContent = '🎯 Révision intensive';
+            this.elements.flashcard.appendChild(intensiveIndicator);
+        }
 
         // Ajouter l'indicateur de répétition si la carte revient
         if (card.needsReview) {
@@ -1253,6 +1193,11 @@ Partie 5;;;;`;
         } else {
             this.showResults();
         }
+        
+        // Mettre à jour les statistiques globales si on est sur l'écran de sélection et que les stats sont visibles
+        if (!this.elements.statsContent.classList.contains('hidden')) {
+            this.updateStatsDisplay();
+        }
     }
 
     // Met à jour les statistiques de session
@@ -1276,602 +1221,373 @@ Partie 5;;;;`;
 
     // Affiche un écran spécifique
     showScreen(screenName) {
+        // Réinitialiser le mode révision intensive quand on revient à la sélection
+        if (screenName === 'selection') {
+            this.isIntensiveReview = false;
+            // Réinitialiser aussi la sélection personnalisée
+            this.customSelectedWords.clear();
+            // Mettre à jour les statistiques si elles sont visibles
+            if (!this.elements.statsContent.classList.contains('hidden')) {
+                this.updateStatsDisplay();
+            }
+        }
+        
         Object.values(this.screens).forEach(screen => {
             screen.classList.remove('active');
         });
         this.screens[screenName].classList.add('active');
     }
 
-    // ===== ADMINISTRATION =====
-    
-    // Ajoute le bouton admin dans l'interface
-    addAdminButton() {
-        // Éviter les doublons
-        if (document.getElementById('admin-btn')) return;
+    // Démarre la révision des cartes difficiles
+    startDifficultCardsReview() {
+        // Obtenir toutes les cartes de tous les types
+        const allCards = [...this.vocabularyData.mots, ...this.vocabularyData.verbes];
         
-        const adminBtn = document.createElement('button');
-        adminBtn.id = 'admin-btn';
-        adminBtn.className = 'admin-btn';
-        adminBtn.innerHTML = '⚙️ Admin';
-        adminBtn.title = 'Panneau d\'administration';
-        adminBtn.onclick = () => this.showAdminPanel();
-        
-        this.elements.userInfo.appendChild(adminBtn);
-    }
-
-    // Affiche le panneau d'administration
-    async showAdminPanel() {
-        try {
-            const users = await this.getAllUsers();
-            
-            // Debug : afficher le contenu
-            console.log('=== DEBUG ADMIN PANEL ===');
-            console.log('Utilisateurs trouvés:', users);
-            console.log('Source: GitHub + localStorage fallback');
-            
-            const overlay = document.createElement('div');
-            overlay.id = 'admin-overlay';
-            overlay.className = 'admin-overlay';
-            
-            overlay.innerHTML = `
-                <div class="admin-panel">
-                    <div class="admin-header">
-                        <h2>🔧 Panneau d'Administration</h2>
-                        <button class="close-btn" onclick="closeAdminPanel()">✕</button>
-                    </div>
-                    
-                    <div class="admin-content">
-                        <div class="admin-section">
-                            <h3>👥 Gestion des Utilisateurs (${users.length})</h3>
-                            <div class="admin-actions">
-                                <button class="admin-btn create-user" onclick="showCreateUserForm()">
-                                    ➕ Créer un utilisateur
-                                </button>
-                            </div>
-                            <div class="users-list" id="admin-users-list">
-                                ${this.generateUsersHTML(users)}
-                            </div>
-                        </div>
-                        
-                        <div class="admin-section">
-                            <h3>📊 Statistiques Globales</h3>
-                            <div class="stats-grid">
-                                ${this.generateStatsHTML(users)}
-                            </div>
-                        </div>
-                        
-                        <div class="admin-section">
-                            <h3>🔍 Debug Info</h3>
-                            <div class="debug-info">
-                                <p><strong>Clés dans localStorage:</strong> ${Object.keys(localStorage).length}</p>
-                                <p><strong>Clés de progression:</strong> ${Object.keys(localStorage).filter(k => k.startsWith('arabicVocabProgress_')).length}</p>
-                                <p><strong>Utilisateurs récents:</strong> ${JSON.parse(localStorage.getItem('recentUsers') || '[]').length}</p>
-                                <details>
-                                    <summary>Voir toutes les clés</summary>
-                                    <pre style="font-size: 0.8rem; max-height: 150px; overflow-y: auto;">${Object.keys(localStorage).join('\\n')}</pre>
-                                </details>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-section danger-zone">
-                            <h3>⚠️ Zone Dangereuse</h3>
-                            <button class="danger-btn" onclick="confirmClearAll()">
-                                🗑️ Supprimer TOUS les comptes
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-footer">
-                        <button class="admin-btn secondary" onclick="closeAdminPanel()">Fermer</button>
-                        <button class="admin-btn primary" onclick="refreshAdminPanel()">🔄 Actualiser</button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(overlay);
-            
-            // Fermer avec Escape
-            document.addEventListener('keydown', this.handleAdminKeydown.bind(this));
-        } catch (error) {
-            console.error('Erreur lors de l\'affichage du panneau admin:', error);
-            alert('Erreur lors du chargement du panneau d\'administration');
-        }
-    }
-
-    // Génère le HTML pour la liste des utilisateurs
-    generateUsersHTML(users) {
-        if (users.length === 0) {
-            return '<div class="no-users">Aucun utilisateur trouvé</div>';
-        }
-        
-        return users.map(user => {
-            const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Jamais';
-            const progressData = this.getUserProgress(user.name);
-            
-            return `
-                <div class="user-card">
-                    <div class="user-info">
-                        <div class="user-name">👤 ${user.name}</div>
-                        <div class="user-details">
-                            <span>Dernière connexion: ${lastLogin}</span>
-                            <span>Progrès: ${progressData.totalAttempts} tentatives</span>
-                            <span>Réussite: ${progressData.successRate}%</span>
-                        </div>
-                    </div>
-                    <div class="user-actions">
-                        <button class="action-btn view" onclick="viewUserDetails('${user.name}')">👁️ Voir</button>
-                        <button class="action-btn delete" onclick="confirmDeleteUser('${user.name}')">🗑️ Supprimer</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // Génère le HTML pour les statistiques
-    generateStatsHTML(users) {
-        const totalUsers = users.length;
-        const totalAttempts = users.reduce((sum, user) => {
-            const progress = this.getUserProgress(user.name);
-            return sum + progress.totalAttempts;
-        }, 0);
-        
-        const activeUsers = users.filter(user => {
-            return user.lastLogin && (Date.now() - user.lastLogin) < (7 * 24 * 60 * 60 * 1000); // 7 jours
-        }).length;
-        
-        return `
-            <div class="stat-card">
-                <div class="stat-number">${totalUsers}</div>
-                <div class="stat-label">Utilisateurs total</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">${activeUsers}</div>
-                <div class="stat-label">Actifs (7j)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">${totalAttempts}</div>
-                <div class="stat-label">Tentatives total</div>
-            </div>
-        `;
-    }
-
-    // Récupère tous les utilisateurs
-    async getAllUsers() {
-        try {
-            // Essayer de récupérer depuis GitHub
-            const gitHubUsers = await this.githubManager.getAllUsers();
-            return gitHubUsers;
-        } catch (error) {
-            console.error('Erreur GitHub, utilisation localStorage:', error);
-            
-            // Fallback vers localStorage
-            const users = [];
-            const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
-            const foundUsers = new Set();
-            
-            // Scanner le localStorage pour tous les utilisateurs avec des données de progression
-            Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('arabicVocabProgress_')) {
-                    const username = key.replace('arabicVocabProgress_', '');
-                    if (username !== 'Administrateur' && username !== 'default') {
-                        foundUsers.add(username);
-                    }
-                }
-            });
-            
-            // Ajouter les utilisateurs trouvés dans le localStorage avec leurs dernières connexions
-            foundUsers.forEach(username => {
-                const recentUser = recentUsers.find(u => {
-                    const userName = typeof u === 'string' ? u : u.name;
-                    return userName === username;
+        // Créer d'abord les cartes avec leurs IDs pour avoir accès aux données de progression
+        const cardsWithIds = [];
+        allCards.forEach(card => {
+            const cardId = this.srs.generateCardId(card);
+            if (this.srs.progress[cardId]) {
+                cardsWithIds.push({
+                    ...card,
+                    id: cardId,
+                    progress: this.srs.progress[cardId]
                 });
-                
-                users.push({
-                    name: username,
-                    lastLogin: recentUser && typeof recentUser === 'object' ? recentUser.lastLogin : null
-                });
-            });
-            
-            // Ajouter les utilisateurs récents qui n'ont pas encore de données de progression
-            recentUsers.forEach(user => {
-                const username = typeof user === 'string' ? user : user.name;
-                if (username !== 'Administrateur' && !foundUsers.has(username)) {
-                    users.push({
-                        name: username,
-                        lastLogin: typeof user === 'object' ? user.lastLogin : null
-                    });
-                }
-            });
-            
-            return users.sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
-        }
-    }
-
-    // Récupère les statistiques d'un utilisateur
-    getUserProgress(username) {
-        return this.githubManager.getUserProgress(username);
-    }
-
-    // Ferme le panneau admin
-    closeAdminPanel() {
-        const overlay = document.getElementById('admin-overlay');
-        if (overlay) {
-            overlay.remove();
-        }
-        document.removeEventListener('keydown', this.handleAdminKeydown);
-    }
-
-    // Gère les touches dans le panneau admin
-    handleAdminKeydown(e) {
-        if (e.key === 'Escape') {
-            this.closeAdminPanel();
-        }
-    }
-
-    // Actualise le panneau admin
-    refreshAdminPanel() {
-        this.closeAdminPanel();
-        this.showAdminPanel();
-    }
-
-    // Confirme la suppression d'un utilisateur
-    confirmDeleteUser(username) {
-        console.log('=== DEBUG SUPPRESSION ===');
-        console.log('Tentative de suppression de:', username);
-        console.log('Clé de progression à supprimer:', `arabicVocabProgress_${username}`);
-        console.log('Existe dans localStorage:', localStorage.getItem(`arabicVocabProgress_${username}`) !== null);
-        
-        if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${username}" ?\n\nCette action est irréversible.`)) {
-            this.deleteUser(username);
-        }
-    }
-
-    // Supprime un utilisateur
-    deleteUser(username) {
-        console.log('=== SUPPRESSION EN COURS ===');
-        console.log('Suppression de l\'utilisateur:', username);
-        
-        // Supprimer les données de progression
-        const progressKey = `arabicVocabProgress_${username}`;
-        const existsBefore = localStorage.getItem(progressKey) !== null;
-        localStorage.removeItem(progressKey);
-        const existsAfter = localStorage.getItem(progressKey) !== null;
-        
-        console.log('Données de progression supprimées:', existsBefore, '→', existsAfter);
-        
-        // Supprimer de la liste des utilisateurs récents
-        let recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
-        console.log('Utilisateurs récents avant:', recentUsers);
-        
-        recentUsers = recentUsers.filter(user => {
-            const userName = typeof user === 'string' ? user : user.name;
-            return userName !== username;
-        });
-        
-        localStorage.setItem('recentUsers', JSON.stringify(recentUsers));
-        console.log('Utilisateurs récents après:', recentUsers);
-        
-        alert(`Utilisateur "${username}" supprimé avec succès !`);
-        this.refreshAdminPanel();
-    }
-
-    // Confirme la suppression de tous les comptes
-    confirmClearAll() {
-        const confirmation = prompt('Pour confirmer la suppression de TOUS les comptes, tapez exactement:\nSUPPRIMER TOUT');
-        
-        if (confirmation === 'SUPPRIMER TOUT') {
-            this.clearAllUsers();
-        } else if (confirmation !== null) {
-            alert('Confirmation incorrecte. Suppression annulée.');
-        }
-    }
-
-    // Supprime tous les utilisateurs
-    clearAllUsers() {
-        let deletedCount = 0;
-        
-        // Supprimer tous les comptes (sauf admin)
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('arabicVocabProgress_') && !key.includes('Administrateur')) {
-                localStorage.removeItem(key);
-                deletedCount++;
             }
         });
+
+        // Initialiser la session avec les cartes difficiles
+        const difficultCardsCount = this.srs.initializeDifficultCardsSession(cardsWithIds);
         
-        // Vider la liste des utilisateurs récents
-        localStorage.setItem('recentUsers', '[]');
+        // Debug: afficher des informations
+        console.log('Cartes avec progression:', cardsWithIds.length);
+        console.log('Cartes difficiles trouvées:', difficultCardsCount);
+        if (cardsWithIds.length > 0) {
+            console.log('Exemple de progression:', cardsWithIds[0].progress);
+        }
         
-        alert(`${deletedCount} compte(s) supprimé(s) avec succès !`);
-        this.refreshAdminPanel();
+        if (difficultCardsCount === 0) {
+            alert('Aucune carte difficile trouvée !\n\nSeules les cartes avec plus de 50% d\'échec sont considérées comme difficiles.\nCommencez quelques révisions pour accumuler des données ou révisez des cartes que vous avez déjà ratées.');
+            return;
+        }
+
+        // Ajouter les cartes difficiles au système SRS
+        this.srs.cards = [];
+        this.srs.remainingCards.forEach(card => {
+            this.srs.addCard({...card});
+        });
+
+        // Préparer l'affichage
+        this.filteredData = this.srs.remainingCards;
+        
+        // Réinitialiser les statistiques de session
+        this.srs.sessionStats = {
+            correct: 0,
+            difficult: 0,
+            incorrect: 0,
+            total: 0,
+            totalAttempts: 0
+        };
+
+        // Marquer que c'est une session de révision intensive
+        this.isIntensiveReview = true;
+
+        this.showScreen('revision');
+        this.showNextCard();
     }
 
-    // Affiche les détails d'un utilisateur
-    viewUserDetails(username) {
-        const progress = this.getUserProgress(username);
-        const progressData = JSON.parse(localStorage.getItem(`arabicVocabProgress_${username}`) || '{}');
+    // Méthode appelée depuis les résultats pour réviser les cartes difficiles
+    startDifficultCardsReviewFromResults() {
+        this.startDifficultCardsReview();
+    }
+
+    // Bascule l'affichage des statistiques
+    toggleStats() {
+        const isHidden = this.elements.statsContent.classList.contains('hidden');
         
-        let detailsHTML = `
-            <div class="user-details-modal">
-                <h3>📊 Détails - ${username}</h3>
-                <div class="details-stats">
-                    <p><strong>Cartes étudiées:</strong> ${progress.cardsCount}</p>
-                    <p><strong>Tentatives totales:</strong> ${progress.totalAttempts}</p>
-                    <p><strong>Réussites:</strong> ${progress.totalSuccesses}</p>
-                    <p><strong>Taux de réussite:</strong> ${progress.successRate}%</p>
-                </div>
-                
-                <h4>Cartes les plus difficiles:</h4>
-                <div class="difficult-cards">
-        `;
-        
-        // Trouver les cartes les plus difficiles
-        const cards = Object.entries(progressData)
-            .map(([id, data]) => ({
-                id: id.split('_').pop(), // Dernière partie de l'ID
-                failures: data.failures || 0,
-                attempts: data.attempts || 0,
-                failureRate: data.attempts > 0 ? Math.round((data.failures / data.attempts) * 100) : 0
-            }))
-            .filter(card => card.attempts > 0)
-            .sort((a, b) => b.failureRate - a.failureRate)
-            .slice(0, 5);
-            
-        if (cards.length > 0) {
-            cards.forEach(card => {
-                detailsHTML += `<p>• ${card.id} - ${card.failureRate}% d'échecs (${card.failures}/${card.attempts})</p>`;
-            });
+        if (isHidden) {
+            this.elements.statsContent.classList.remove('hidden');
+            this.elements.toggleStatsBtn.textContent = '📊 Masquer';
+            this.updateStatsDisplay();
         } else {
-            detailsHTML += '<p>Aucune donnée disponible</p>';
-        }
-        
-        detailsHTML += `
-                </div>
-                <button onclick="closeUserDetails()" class="close-details-btn">Fermer</button>
-            </div>
-        `;
-        
-        const modal = document.createElement('div');
-        modal.id = 'user-details-modal';
-        modal.className = 'user-details-overlay';
-        modal.innerHTML = detailsHTML;
-        document.body.appendChild(modal);
-    }
-
-    // Ferme les détails utilisateur
-    closeUserDetails() {
-        const modal = document.getElementById('user-details-modal');
-        if (modal) {
-            modal.remove();
+            this.elements.statsContent.classList.add('hidden');
+            this.elements.toggleStatsBtn.textContent = '📈 Afficher';
         }
     }
 
-    // ===== GESTION DES UTILISATEURS =====
-    
-    // Vérifie si un utilisateur existe
-    async userExists(username) {
-        return await this.githubManager.userExists(username);
-    }
-    
-    // Affiche un message d'erreur de connexion
-    showLoginError(message) {
-        // Supprimer le message précédent s'il existe
-        this.clearLoginError();
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'login-error';
-        errorDiv.id = 'login-error';
-        errorDiv.textContent = message;
-        
-        // Insérer après le bouton de connexion
-        const loginBtn = this.elements.loginBtn;
-        loginBtn.parentNode.insertBefore(errorDiv, loginBtn.nextSibling);
-        
-        // Auto-effacement après 5 secondes
-        setTimeout(() => {
-            this.clearLoginError();
-        }, 5000);
-    }
-    
-    // Efface le message d'erreur de connexion
-    clearLoginError() {
-        const errorDiv = document.getElementById('login-error');
-        if (errorDiv) {
-            errorDiv.remove();
-        }
-    }
+    // Met à jour l'affichage des statistiques
+    updateStatsDisplay() {
+        const progress = this.srs.progress;
+        let totalAttempts = 0;
+        let totalSuccesses = 0;
+        let totalFailures = 0;
+        let difficultCards = 0;
+        let masteredCards = 0;
 
-    // Affiche le formulaire de création d'utilisateur
-    showCreateUserForm() {
-        const formHTML = `
-            <div class="create-user-form" id="create-user-form">
-                <h4>➕ Créer un nouvel utilisateur</h4>
-                <div class="form-row">
-                    <label for="new-username">Nom d'utilisateur :</label>
-                    <input type="text" id="new-username" placeholder="Nom d'utilisateur..." maxlength="30">
-                </div>
-                <div class="form-actions">
-                    <button class="admin-btn secondary" onclick="hideCreateUserForm()">Annuler</button>
-                    <button class="admin-btn primary" onclick="createNewUser()">Créer</button>
-                </div>
-                <div id="create-user-error" class="create-user-error" style="display: none;"></div>
-            </div>
-        `;
-        
-        // Ajouter le formulaire après les actions
-        const actionsDiv = document.querySelector('.admin-actions');
-        if (actionsDiv) {
-            actionsDiv.insertAdjacentHTML('afterend', formHTML);
-            document.getElementById('new-username').focus();
-        }
-    }
-    
-    // Cache le formulaire de création d'utilisateur
-    hideCreateUserForm() {
-        const form = document.getElementById('create-user-form');
-        if (form) {
-            form.remove();
-        }
-    }
-    
-    // Crée un nouvel utilisateur
-    async createNewUser() {
-        const usernameInput = document.getElementById('new-username');
-        const errorDiv = document.getElementById('create-user-error');
-        const username = usernameInput.value.trim();
-        
-        console.log('🔧 Création utilisateur:', username);
-        
-        // Validation
-        if (!username) {
-            this.showCreateUserError('Veuillez saisir un nom d\'utilisateur');
-            return;
-        }
-        
-        if (username.length < 2) {
-            this.showCreateUserError('Le nom d\'utilisateur doit contenir au moins 2 caractères');
-            return;
-        }
-        
-        if (username === 'Liska91240!' || username === 'Administrateur') {
-            this.showCreateUserError('Ce nom d\'utilisateur est réservé');
-            return;
-        }
-        
-        // Vérifier si l'utilisateur existe déjà
-        try {
-            console.log('🔧 Vérification existence utilisateur...');
-            const exists = await this.userExists(username);
-            console.log('🔧 Utilisateur existe:', exists);
-            
-            if (exists) {
-                this.showCreateUserError(`L'utilisateur "${username}" existe déjà`);
-                return;
+        // Parcourir toutes les cartes dans les données de progression
+        Object.values(progress).forEach(cardProgress => {
+            totalAttempts += cardProgress.attempts;
+            totalSuccesses += cardProgress.successes;
+            totalFailures += cardProgress.failures;
+
+            // Carte difficile si taux d'échec > 50%
+            if (cardProgress.attempts > 0) {
+                const failureRate = cardProgress.failures / cardProgress.attempts;
+                if (failureRate > 0.5) {
+                    difficultCards++;
+                }
             }
+
+            // Carte maîtrisée si taux de réussite > 80% et au moins 5 tentatives
+            if (cardProgress.attempts >= 5) {
+                const successRate = cardProgress.successes / cardProgress.attempts;
+                if (successRate > 0.8) {
+                    masteredCards++;
+                }
+            }
+        });
+
+        // Calculer le taux de réussite global
+        const successRate = totalAttempts > 0 ? Math.round((totalSuccesses / totalAttempts) * 100) : 0;
+
+        // Mettre à jour l'affichage
+        this.elements.totalAttempts.textContent = totalAttempts;
+        this.elements.totalSuccesses.textContent = totalSuccesses;
+        this.elements.totalFailures.textContent = totalFailures;
+        this.elements.successRate.textContent = `${successRate}%`;
+        this.elements.difficultCards.textContent = difficultCards;
+        this.elements.masteredCards.textContent = masteredCards;
+    }
+
+    // Réinitialise les statistiques
+    resetStats() {
+        const confirmReset = confirm(
+            '⚠️ Attention !\n\n' +
+            'Cette action va effacer toutes vos statistiques de progression :\n' +
+            '• Toutes les tentatives et résultats\n' +
+            '• L\'historique des révisions\n' +
+            '• Les données de répétition espacée\n\n' +
+            'Cette action est irréversible.\n\n' +
+            'Êtes-vous sûr de vouloir continuer ?'
+        );
+
+        if (confirmReset) {
+            // Effacer les données de progression
+            this.srs.progress = {};
+            this.srs.saveProgress();
             
-            // Créer l'utilisateur
-            console.log('🔧 Création de l\'utilisateur...');
-            this.createUser(username);
-        } catch (error) {
-            console.error('Erreur lors de la vérification utilisateur:', error);
-            this.showCreateUserError('Erreur lors de la vérification. Réessayez.');
+            // Recharger toutes les cartes pour réinitialiser leurs données de progression
+            if (this.vocabularyData.mots.length > 0 || this.vocabularyData.verbes.length > 0) {
+                this.srs.cards = [];
+                [...this.vocabularyData.mots, ...this.vocabularyData.verbes].forEach(card => {
+                    this.srs.addCard({...card});
+                });
+            }
+
+            // Mettre à jour l'affichage des statistiques
+            this.updateStatsDisplay();
+
+            alert('✅ Statistiques réinitialisées avec succès !');
         }
     }
-    
-    // Crée un utilisateur avec les données initiales
-    createUser(username) {
-        // Créer une entrée vide de progression pour marquer l'existence
-        localStorage.setItem(`arabicVocabProgress_${username}`, '{}');
-        
-        // Ajouter à la liste des utilisateurs récents
-        let recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
-        
-        // Supprimer s'il existe déjà
-        recentUsers = recentUsers.filter(user => {
-            const userName = typeof user === 'string' ? user : user.name;
-            return userName !== username;
-        });
-        
-        // Ajouter le nouvel utilisateur
-        recentUsers.unshift({
-            name: username,
-            lastLogin: Date.now()
-        });
-        
-        // Garder seulement les 10 derniers (plus large pour les admins)
-        recentUsers = recentUsers.slice(0, 10);
-        
-        localStorage.setItem('recentUsers', JSON.stringify(recentUsers));
-        
-        // Masquer le formulaire et actualiser
-        this.hideCreateUserForm();
-        alert(`Utilisateur "${username}" créé avec succès !`);
-        this.refreshAdminPanel();
+
+    // ==========================================
+    // Méthodes pour la révision personnalisée
+    // ==========================================
+
+    // Initialise l'interface de sélection personnalisée
+    initializeCustomSelection() {
+        // Réinitialiser les sélections
+        this.customSelectedWords.clear();
+        this.elements.customTypeSelect.value = '';
+        this.elements.customThemeSelect.value = '';
+        this.elements.customThemeContainer.classList.add('hidden');
+        this.elements.customWordsContainer.classList.add('hidden');
+        this.elements.startCustomBtn.disabled = true;
+        this.updateCustomSelectionCount();
     }
-    
-    // Affiche une erreur de création d'utilisateur
-    showCreateUserError(message) {
-        const errorDiv = document.getElementById('create-user-error');
-        if (errorDiv) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            
-            // Auto-effacement après 3 secondes
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 3000);
+
+    // Gère le changement de type dans la sélection personnalisée
+    handleCustomTypeChange() {
+        const selectedType = this.elements.customTypeSelect.value;
+        
+        if (!selectedType) {
+            this.elements.customThemeContainer.classList.add('hidden');
+            this.elements.customWordsContainer.classList.add('hidden');
+            return;
         }
+
+        // Afficher le sélecteur de thématique
+        this.elements.customThemeContainer.classList.remove('hidden');
+        this.populateCustomThemes(selectedType);
+        
+        // Masquer les mots et réinitialiser
+        this.elements.customWordsContainer.classList.add('hidden');
+        this.customSelectedWords.clear();
+        this.updateCustomSelectionCount();
+    }
+
+    // Remplit les thématiques pour le type sélectionné
+    populateCustomThemes(type) {
+        const data = this.vocabularyData[type];
+        const themes = new Set();
+        
+        data.forEach(item => {
+            const themeKey = `${item.niveau} - ${item.thematique}`;
+            themes.add(themeKey);
+        });
+
+        // Vider et remplir le sélecteur de thématiques
+        this.elements.customThemeSelect.innerHTML = '<option value="">-- Choisir une thématique --</option>';
+        
+        Array.from(themes).sort().forEach(theme => {
+            const option = document.createElement('option');
+            option.value = theme;
+            option.textContent = theme;
+            this.elements.customThemeSelect.appendChild(option);
+        });
+    }
+
+    // Gère le changement de thématique
+    handleCustomThemeChange() {
+        const selectedType = this.elements.customTypeSelect.value;
+        const selectedTheme = this.elements.customThemeSelect.value;
+        
+        if (!selectedType || !selectedTheme) {
+            this.elements.customWordsContainer.classList.add('hidden');
+            return;
+        }
+
+        // Afficher les mots
+        this.elements.customWordsContainer.classList.remove('hidden');
+        this.populateCustomWords(selectedType, selectedTheme);
+        
+        // Réinitialiser les sélections
+        this.customSelectedWords.clear();
+        this.updateCustomSelectionCount();
+    }
+
+    // Remplit les mots pour le type et la thématique sélectionnés
+    populateCustomWords(type, theme) {
+        const [niveau, thematique] = theme.split(' - ');
+        const data = this.vocabularyData[type].filter(item => 
+            item.niveau === niveau && item.thematique === thematique
+        );
+
+        // Vider la grille
+        this.elements.customWordsGrid.innerHTML = '';
+
+        // Créer les cases à cocher pour chaque mot
+        data.forEach(word => {
+            const wordCheckbox = this.createCustomWordCheckbox(word);
+            this.elements.customWordsGrid.appendChild(wordCheckbox);
+        });
+    }
+
+    // Crée une case à cocher pour un mot personnalisé
+    createCustomWordCheckbox(word) {
+        const label = document.createElement('label');
+        label.className = 'word-checkbox';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = this.srs.generateCardId(word);
+        checkbox.addEventListener('change', () => this.handleCustomWordChange(word, checkbox.checked));
+
+        const checkmark = document.createElement('span');
+        checkmark.className = 'word-checkmark';
+
+        const wordInfo = document.createElement('div');
+        wordInfo.className = 'word-info';
+
+        const arabicDiv = document.createElement('div');
+        arabicDiv.className = 'word-arabic';
+        arabicDiv.textContent = word.arabic;
+
+        const translationDiv = document.createElement('div');
+        translationDiv.className = 'word-translation';
+        translationDiv.textContent = word.translation;
+
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'word-details';
+        
+        if (word.type === 'mots') {
+            detailsDiv.textContent = word.plural ? `Pluriel: ${word.plural}` : 'Mot (nom/adjectif)';
+        } else if (word.type === 'verbes') {
+            detailsDiv.textContent = `Présent: ${word.present} | Impératif: ${word.imperative}`;
+        }
+
+        wordInfo.appendChild(arabicDiv);
+        wordInfo.appendChild(translationDiv);
+        wordInfo.appendChild(detailsDiv);
+
+        label.appendChild(checkbox);
+        label.appendChild(checkmark);
+        label.appendChild(wordInfo);
+
+        return label;
+    }
+
+    // Gère le changement d'un mot personnalisé
+    handleCustomWordChange(word, checked) {
+        const wordId = this.srs.generateCardId(word);
+        
+        if (checked) {
+            this.customSelectedWords.add(wordId);
+        } else {
+            this.customSelectedWords.delete(wordId);
+        }
+        
+        this.updateCustomSelectionCount();
+    }
+
+    // Met à jour le compteur de sélection personnalisée
+    updateCustomSelectionCount() {
+        const count = this.customSelectedWords.size;
+        
+        if (count === 0) {
+            this.elements.customSelectionCount.textContent = 'Aucun mot sélectionné';
+            this.elements.startCustomBtn.disabled = true;
+        } else {
+            this.elements.customSelectionCount.textContent = `${count} mot${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`;
+            this.elements.startCustomBtn.disabled = false;
+        }
+    }
+
+    // Démarre la révision personnalisée
+    startCustomRevision() {
+        if (this.customSelectedWords.size === 0) {
+            alert('Veuillez sélectionner au moins un mot !');
+            return;
+        }
+
+        // Obtenir tous les mots de tous les types
+        const allWords = [...this.vocabularyData.mots, ...this.vocabularyData.verbes];
+        
+        // Filtrer pour ne garder que les mots sélectionnés
+        this.filteredData = allWords.filter(word => {
+            const wordId = this.srs.generateCardId(word);
+            return this.customSelectedWords.has(wordId);
+        });
+
+        console.log('Mots sélectionnés pour révision personnalisée:', this.filteredData.length);
+
+        // Initialiser le système de révision
+        this.srs.cards = [];
+        this.filteredData.forEach(item => this.srs.addCard(item));
+        
+        // Démarrer une session avec ordre aléatoire
+        this.srs.resetSession();
+
+        // Marquer que ce n'est pas une révision intensive
+        this.isIntensiveReview = false;
+
+        this.showScreen('revision');
+        this.showNextCard();
     }
 }
 
 // Initialiser l'application quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', () => {
-    window.vocabApp = new VocabApp();
+    new VocabApp();
 });
-
-// Fonctions globales pour le panneau d'administration
-window.closeAdminPanel = function() {
-    if (window.vocabApp) {
-        window.vocabApp.closeAdminPanel();
-    }
-};
-
-window.refreshAdminPanel = function() {
-    if (window.vocabApp) {
-        window.vocabApp.refreshAdminPanel();
-    }
-};
-
-window.confirmDeleteUser = function(username) {
-    if (window.vocabApp) {
-        window.vocabApp.confirmDeleteUser(username);
-    }
-};
-
-window.confirmClearAll = function() {
-    if (window.vocabApp) {
-        window.vocabApp.confirmClearAll();
-    }
-};
-
-window.viewUserDetails = function(username) {
-    if (window.vocabApp) {
-        window.vocabApp.viewUserDetails(username);
-    }
-};
-
-window.closeUserDetails = function() {
-    if (window.vocabApp) {
-        window.vocabApp.closeUserDetails();
-    }
-};
-
-window.showCreateUserForm = function() {
-    if (window.vocabApp) {
-        window.vocabApp.showCreateUserForm();
-    }
-};
-
-window.hideCreateUserForm = function() {
-    if (window.vocabApp) {
-        window.vocabApp.hideCreateUserForm();
-    }
-};
-
-window.createNewUser = async function() {
-    if (window.vocabApp) {
-        await window.vocabApp.createNewUser();
-    }
-};
-
-window.showCreateUserForm = function() {
-    if (window.vocabApp) {
-        window.vocabApp.showCreateUserForm();
-    }
-};
-
-window.hideCreateUserForm = function() {
-    if (window.vocabApp) {
-        window.vocabApp.hideCreateUserForm();
-    }
-};
-// j

@@ -9,56 +9,77 @@
 </head>
 <body>
     <div class="container">
-        <!-- Écran de connexion -->
-        <div id="login-screen" class="screen active">
-            <div class="login-container">
-                <div class="login-header">
-                    <h1>مرحباً بك 🌙</h1>
-                    <p>أَهْلاً وَسَهْلاً بِكَ فِي تَطْبِيقِ مُرَاجَعَةِ الْمُفْرَدَاتِ الْعَرَبِيَّةِ</p>
-                </div>
+        <header class="header">
+            <h1>مراجعة المفردات العربية 🌙</h1>
+            <p>.أَتْقِنُوا الْمُفْرَدَاتِ الْعَرَبِيَّةَ بِنِظَامِ التَّكْرَارِ الْمُتَبَاعِدِ</p>
+        </header>                <!-- Écran de sélection -->
+        <div id="selection-screen" class="screen active">
+            <div class="selection-container">
+                <h2>اِخْتَارُوا وَقْتَ مُرَاجَعَتِكُمْ</h2>
                 
-                <div class="login-form">
-                    <div class="form-group">
-                        <label for="username">Nom d'utilisateur</label>
-                        <input type="text" id="username" placeholder="Entrez votre nom..." maxlength="30" autocomplete="username">
-                        <div class="input-hint">Ce nom sera utilisé pour sauvegarder vos progrès</div>
+                <!-- Section des statistiques -->
+                <div id="stats-section" class="stats-section">
+                    <div class="stats-header">
+                        <h3>📊 Mes statistiques</h3>
+                        <button id="toggle-stats-btn" class="stats-toggle-btn">📈 Afficher</button>
                     </div>
                     
-                    <button id="login-btn" class="login-btn" disabled>
-                        <span>Se connecter</span>
-                        <span class="btn-icon">→</span>
-                    </button>
-                    
-                    <div class="recent-users" id="recent-users" style="display: none;">
-                        <h3>Utilisateurs récents</h3>
-                        <div class="user-list" id="user-list">
-                            <!-- Les utilisateurs récents seront affichés ici -->
+                    <div id="stats-content" class="stats-content hidden">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">🎯</div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="total-attempts">0</div>
+                                    <div class="stat-label">Total tentatives</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">✅</div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="total-successes">0</div>
+                                    <div class="stat-label">Réussites</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">❌</div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="total-failures">0</div>
+                                    <div class="stat-label">Échecs</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">📈</div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="success-rate">0%</div>
+                                    <div class="stat-label">Taux de réussite</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">🔥</div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="difficult-cards">0</div>
+                                    <div class="stat-label">Cartes difficiles</div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">⭐</div>
+                                <div class="stat-info">
+                                    <div class="stat-number" id="mastered-cards">0</div>
+                                    <div class="stat-label">Cartes maîtrisées</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-actions">
+                            <button id="reset-stats-btn" class="reset-stats-btn">🗑️ Réinitialiser les statistiques</button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <header class="header">
-            <div class="header-content">
-                <div class="header-left">
-                    <h1>مراجعة المفردات العربية 🌙</h1>
-                    <p>.أَتْقِنُوا الْمُفْرَدَاتِ الْعَرَبِيَّةَ بِنِظَامِ التَّكْرَارِ الْمُتَبَاعِدِ</p>
-                </div>
-                <div class="header-right">
-                    <div class="user-info" id="user-info" style="display: none;">
-                        <span class="user-welcome">مرحباً</span>
-                        <span class="username" id="current-username"></span>
-                        <button class="logout-btn" id="logout-btn" title="تسجيل الخروج">🚪</button>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Écran de sélection -->
-        <div id="selection-screen" class="screen">
-            <div class="selection-container">
-                <h2>اِخْتَارُوا وَقْتَ مُرَاجَعَتِكُمْ</h2>
                 
                 <!-- Sélection du type -->
                 <div class="type-selection">
@@ -69,6 +90,14 @@
                     <button class="type-btn" data-type="verbes">
                         الافعال 🔄
                         <span>Conjugaisons et formes verbales</span>
+                    </button>
+                    <button class="type-btn special-mode" data-type="revision">
+                        المراجعة المكثفة 🎯
+                        <span>Réviser les mots les plus difficiles</span>
+                    </button>
+                    <button class="type-btn special-mode" data-type="custom">
+                        المراجعة الشخصية 🎨
+                        <span>Choisissez précisément vos mots à réviser</span>
                     </button>
                 </div>
 
@@ -86,6 +115,42 @@
                     </div>
                     
                     <button id="start-btn" class="start-btn" disabled>Commencer la révision</button>
+                </div>
+
+                <!-- Sélection personnalisée -->
+                <div id="custom-selection" class="custom-selection hidden">
+                    <div class="filter-header-main">
+                        <h3>🎨 Sélection personnalisée</h3>
+                        <div class="selection-summary">
+                            <span id="custom-selection-count">Aucun mot sélectionné</span>
+                        </div>
+                    </div>
+
+                    <div class="custom-controls">
+                        <div class="custom-type-selector">
+                            <label>Type de vocabulaire :</label>
+                            <select id="custom-type-select">
+                                <option value="">-- Choisir un type --</option>
+                                <option value="mots">Mots (الاسماء)</option>
+                                <option value="verbes">Verbes (الافعال)</option>
+                            </select>
+                        </div>
+
+                        <div class="custom-theme-selector hidden" id="custom-theme-container">
+                            <label>Thématique :</label>
+                            <select id="custom-theme-select">
+                                <option value="">-- Choisir une thématique --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="custom-words-container" class="custom-words-container hidden">
+                        <div class="words-grid" id="custom-words-grid">
+                            <!-- Les mots seront générés dynamiquement -->
+                        </div>
+                    </div>
+                    
+                    <button id="start-custom-btn" class="start-btn" disabled>Commencer la révision personnalisée</button>
                 </div>
             </div>
         </div>
@@ -172,13 +237,12 @@
                 <div class="result-actions">
                     <button id="restart-btn" class="control-btn primary">Recommencer</button>
                     <button id="new-selection-btn" class="control-btn">Nouvelle sélection</button>
+                    <button id="review-difficult-btn" class="control-btn special">Réviser les difficiles</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="github-user-manager.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-<!-- n -->
