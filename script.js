@@ -1719,6 +1719,8 @@ Partie 5;;;;`;
         const errorDiv = document.getElementById('create-user-error');
         const username = usernameInput.value.trim();
         
+        console.log('🔧 Création utilisateur:', username);
+        
         // Validation
         if (!username) {
             this.showCreateUserError('Veuillez saisir un nom d\'utilisateur');
@@ -1737,13 +1739,17 @@ Partie 5;;;;`;
         
         // Vérifier si l'utilisateur existe déjà
         try {
+            console.log('🔧 Vérification existence utilisateur...');
             const exists = await this.userExists(username);
+            console.log('🔧 Utilisateur existe:', exists);
+            
             if (exists) {
                 this.showCreateUserError(`L'utilisateur "${username}" existe déjà`);
                 return;
             }
             
             // Créer l'utilisateur
+            console.log('🔧 Création de l\'utilisateur...');
             this.createUser(username);
         } catch (error) {
             console.error('Erreur lors de la vérification utilisateur:', error);

@@ -13,6 +13,13 @@ class GitHubUserManager {
     // Récupère le contenu du fichier users.json depuis GitHub
     async fetchUsersFromGitHub() {
         try {
+            // Vérifier si les paramètres sont configurés
+            if (this.repoOwner === 'VOTRE_USERNAME' || this.repoName === 'VOTRE_REPO' || 
+                !this.repoOwner || !this.repoName) {
+                console.log('GitHub non configuré, utilisation du localStorage');
+                return this.getFallbackUsers();
+            }
+
             const now = Date.now();
             
             // Utiliser le cache si pas expiré
@@ -52,13 +59,44 @@ class GitHubUserManager {
     // Fallback vers localStorage si GitHub n'est pas accessible
     getFallbackUsers() {
         const recentUsers = JSON.parse(localStorage.getItem('recentUsers') || '[]');
-        return {
-            users: recentUsers.map(user => ({
-                name: typeof user === 'string' ? user : user.name,
-                createdAt: typeof user === 'object' ? user.lastLogin : Date.now(),
-                lastLogin: typeof user === 'object' ? user.lastLogin : Date.now(),
+        
+        // Récupérer aussi tous les utilisateurs qui ont des données de progression
+        const allUsers = new Set();
+        
+        // Ajouter les utilisateurs récents
+        recentUsers.forEach(user => {
+            const userName = typeof user === 'string' ? user : user.name;
+            allUsers.add(userName);
+        });
+        
+        // Chercher dans localStorage tous les utilisateurs avec des données de progression
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('arabicVocabProgress_')) {
+                const username = key.replace('arabicVocabProgress_', '');
+                if (username && username !== 'default') {
+                    allUsers.add(username);
+                }
+            }
+        }
+        
+        // Créer la structure de données
+        const users = Array.from(allUsers).map(username => {
+            const recentUser = recentUsers.find(user => {
+                const userName = typeof user === 'string' ? user : user.name;
+                return userName === username;
+            });
+            
+            return {
+                name: username,
+                createdAt: typeof recentUser === 'object' ? recentUser.lastLogin : Date.now(),
+                lastLogin: typeof recentUser === 'object' ? recentUser.lastLogin : Date.now(),
                 progress: {}
-            })),
+            };
+        });
+        
+        return {
+            users: users,
             lastUpdated: Date.now()
         };
     }
