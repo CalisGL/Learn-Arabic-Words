@@ -986,7 +986,7 @@ Partie 5;;;;`;
                 this.elements.additionalInfo.innerHTML = `
                     <div><strong>Singulier:</strong> ${card.arabic}</div>
                     ${card.plural ? `<div><strong>Pluriel:</strong> ${card.plural}</div>` : ''}
-                    <div><strong>Traduction:</strong> ${card.translation}</div>
+                    <div><strong>الترجمة :</strong> ${card.translation}</div>
                 `;
             } else {
                 this.elements.additionalInfo.innerHTML = `
@@ -1036,7 +1036,9 @@ Partie 5;;;;`;
             // Carte difficile : la remettre en fin de pile aussi
             this.srs.addFailedCardToEnd(card);
         } else {
-            this.srs.sessionStats.correct++;
+            if (!card.needsReview) {
+                this.srs.sessionStats.correct++;
+            }
             // Carte réussie : ne pas la remettre
         }
 
