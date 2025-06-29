@@ -131,6 +131,13 @@ class SpacedRepetitionSystem {
             total: 0,
             totalAttempts: 0
         };
+        
+        // Réinitialiser toutes les propriétés des cartes de la session
+        this.cards.forEach(card => {
+            delete card.needsReview;
+            delete card.countedInTotal;
+        });
+        
         // Initialiser la session avec un ordre aléatoire
         this.initializeRandomSession();
     }
