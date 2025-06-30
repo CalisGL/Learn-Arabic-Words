@@ -218,7 +218,7 @@ class SpacedRepetitionSystem {
             if (!progress || progress.attempts === 0) return false;
             
             const failureRate = progress.failures / progress.attempts;
-            return failureRate > 0.3; // Plus de 30% d'échec
+            return failureRate > 0.5; // Plus de 50% d'échec
         });
 
         // Trie par taux d'échec décroissant
@@ -246,7 +246,7 @@ class SpacedRepetitionSystem {
         const difficultCards = this.getDifficultCards(allCards);
         
         if (difficultCards.length === 0) {
-            // Aucune carte difficile trouvée selon le critère strict (>30% échec)
+            // Aucune carte difficile trouvée selon le critère strict (>50% échec)
             // Ne pas faire de fallback, retourner 0 pour indiquer qu'il n'y a pas de cartes difficiles
             this.remainingCards = [];
             this.currentSessionCards = [];
@@ -1290,7 +1290,7 @@ Partie 5;;;;`;
         }
         
         if (difficultCardsCount === 0) {
-            alert('Aucune carte difficile trouvée !\n\nSeules les cartes avec plus de 30% d\'échec sont considérées comme difficiles.\nCommencez quelques révisions pour accumuler des données ou révisez des cartes que vous avez déjà ratées.');
+            alert('Aucune carte difficile trouvée !\n\nSeules les cartes avec plus de 50% d\'échec sont considérées comme difficiles.\nCommencez quelques révisions pour accumuler des données ou révisez des cartes que vous avez déjà ratées.');
             return;
         }
 
@@ -1353,10 +1353,10 @@ Partie 5;;;;`;
             totalSuccesses += cardProgress.successes;
             totalFailures += cardProgress.failures;
 
-            // Carte difficile si taux d'échec > 30%
+            // Carte difficile si taux d'échec > 50%
             if (cardProgress.attempts > 0) {
                 const failureRate = cardProgress.failures / cardProgress.attempts;
-                if (failureRate > 0.3) {
+                if (failureRate > 0.5) {
                     difficultCards++;
                 }
             }
