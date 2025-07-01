@@ -405,6 +405,16 @@ Partie 3;;
 عِشْرُونَ;;20
 ثَلَاثُونَ;;30
 Partie 4;;
+كَيْفَ أَنْتَ؟;;Comment vas tu ?
+أَرْجُو أَنَّكَ بِخَيْرٍ;;J'espère que tu vas bien
+أَنَا بِخَيْرٍ وَالْحَمْدُ لِلهِ;;Je vais bien et Al Hamdoulillah
+وَأَنْتَ؟;;Et toi ?
+أَنَا كَذَلِكَ;;Moi aussi
+مَرْحَبًا بِكَ;;Bienvenue à toi
+شُكْرًا جَزِيلًا;;Merci beaucoup
+أَنَا سَعِيدٌ جِدًّا لِرُؤْيَتِكَ;;Je suis très heureux de te voir
+هَيَّا بِنَا;;Allons y
+حَسَنًا;;D'accord
 أَهْلًا وَسَهْلًا;;Bienvenue
 صَبَاحُ الْخَيْرِ;;Bonjour
 مَسَاءُ الْخَيْرِ;;Bonsoir
