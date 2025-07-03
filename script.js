@@ -383,8 +383,8 @@ Partie 2;;
 كَيْفَ;;Comment
 خَيْرٌ;;Bien
 أَنَا;;Je
-أَنْتَ;;Tu
-كَذَلِكَ;;De même
+أَنْتَ;;Tu/Toi (Masculin)
+كَذَلِكَ;;Aussi/Également
 مَرْحَبًا;;Bienvenue
 حَمْدٌ;;Louange
 سَعِيدٌ;سُعَدَاءُ;Heureux
@@ -405,10 +405,10 @@ Partie 3;;
 عِشْرُونَ;;20
 ثَلَاثُونَ;;30
 Partie 4;;
-كَيْفَ أَنْتَ؟;;Comment vas tu ?
+كَيْفَ أَنْتَ؟;;Comment vas tu
 أَرْجُو أَنَّكَ بِخَيْرٍ;;J'espère que tu vas bien
 أَنَا بِخَيْرٍ وَالْحَمْدُ لِلهِ;;Je vais bien et Al Hamdoulillah
-وَأَنْتَ؟;;Et toi ?
+وَأَنْتَ؟;;Et toi
 أَنَا كَذَلِكَ;;Moi aussi
 مَرْحَبًا بِكَ;;Bienvenue à toi
 شُكْرًا جَزِيلًا;;Merci beaucoup
@@ -431,6 +431,21 @@ Partie 4;;
 Partie 5;;
 Thématique 2;;
 Partie 1;;
+تَعَارُفٌ;;Le fait de faire Connaissance
+مَعَ;;Avec
+حَافِلَةٌ;حَافِلَاتٌ;Bus
+ذَهَابٌ;;Le fait d'aller
+لَمَّا;;Lorsque
+بَيْتٌ;بُيُوتٌ;Maison
+جَدِيدٌ;جُدُدٌ;Nouveau
+صَاحِبٌ;أَصْحَابٌ;Compagnon / Propriétaire / Celui qui a
+سَكَنٌ;أَسْكَانٌ;Logement
+شَايٌ;-;Thé
+كَعْكَةٌ;كَعْكٌ;Gateau
+لِقَاءٌ;لِقَاءَاتٌ;Rencontre
+حَيَاةٌ;حَيَوَاتٌ;Vie
+أَهَمِّيَّةٌ;;Importance
+
 Partie 2;;
 Partie 3;;
 Partie 4;;
@@ -541,6 +556,14 @@ Partie 4;;;;
 Partie 5;;;;
 Thématique 2;;;;
 Partie 1;;;;
+خَرَجَ;يَخْرُجُ;اُخْرُجْ;خُرُوجًا;Sortir
+رَكِبَ;يَرْكَبُ;اِرْكَبْ;رُكُوبًا;Monter
+دَخَلَ;يَدْخُلُ;اُدْخُلْ;دُخُولًا;Rentrer
+تَعَرَّفَ;يَتَعَرَّفُ;تَعَرَّفْ;تَعَرُّفًا;Faire connaissance
+رَحَّبَ;يُرَحِّبُ;رَحِّبْ;تَرْحِيبًا;accueillir (chaleureusement)
+شَرِبَ;يَشْرَبُ;اِشْرَبْ;شُرْبًا;Boire
+أَكَلَ;يَأْكُلُ;كُلْ;أَكْلًا;Manger
+تَكَلَّمَ;يَتَكَلَّمُ;تَكَلَّمْ;تَكَلُّمًا;Parler
 Partie 2;;;;
 Partie 3;;;;
 Partie 4;;;;
