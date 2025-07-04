@@ -1179,14 +1179,14 @@ Partie 5;;;;`;
         if (card.type === 'mots') {
             if (this.reverseMode) {
                 this.elements.additionalInfo.innerHTML = `
-                    <div><strong>Singulier:</strong> ${card.arabic}</div>
-                    ${card.plural ? `<div><strong>Pluriel:</strong> ${card.plural}</div>` : ''}
+                    <div><strong>الكلمة :</strong> ${card.arabic}</div>
+                    ${card.plural ? `<div><strong>الجمع :</strong> ${card.plural}</div>` : ''}
                     <div><strong>الترجمة :</strong> ${card.translation}</div>
                 `;
             } else {
                 this.elements.additionalInfo.innerHTML = `
-                    <div><strong>Singulier:</strong> ${card.arabic}</div>
-                    ${card.plural ? `<div><strong>Pluriel:</strong> ${card.plural}</div>` : ''}
+                    <div><strong>الكلمة :</strong> ${card.arabic}</div>
+                    ${card.plural ? `<div><strong>الجمع :</strong> ${card.plural}</div>` : ''}
                 `;
             }
         } else if (card.type === 'verbes') {
