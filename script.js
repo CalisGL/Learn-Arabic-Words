@@ -422,7 +422,7 @@ Partie 4;;
 تَصْبَحُ عَلَى خَيْرٍ;;Bonne nuit
 إِلَى اللِّقَاءِ;;À la prochaine
 أَرَاكَ غَدًا;;Je te vois demain
-أَرَاكَ لاَحِقًا;;Je te vois plus tard
+أَرَاكَ لَاحِقًا;;Je te vois plus tard
 أَرَاكَ قَرِيبًا;;Je te vois bientôt
 نَلْتَقِي فِيمَا بَعْدُ;;On se voit plus tard
 مَعَ السَّلَامَةِ;;Au revoir
@@ -440,7 +440,7 @@ Partie 1;;
 جَدِيدٌ;جُدُدٌ;Nouveau
 صَاحِبٌ;أَصْحَابٌ;Compagnon / Propriétaire / Celui qui a
 سَكَنٌ;أَسْكَانٌ;Logement
-شَايٌ;-;Thé
+شَايٌ;;Thé
 كَعْكَةٌ;كَعْكٌ;Gateau
 لِقَاءٌ;لِقَاءَاتٌ;Rencontre
 حَيَاةٌ;حَيَوَاتٌ;Vie
