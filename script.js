@@ -460,9 +460,15 @@ class VocabApp {
         this.isIntensiveReview = false; // Initialiser le mode révision intensive
         this.isOldWordsReview = false; // Initialiser le mode révision des mots anciens
         this.isNumbersReview = false; // Initialiser le mode révision des chiffres
+        this.isOldWordsMainSession = false; // Distinguer session principale vs répétition
         this.customSelectedWords = new Set(); // Mots sélectionnés pour la révision personnalisée
         this.autoAudioMode = false; // Mode audio automatique
         this.numbersData = []; // Données des chiffres pour l'entraînement
+        
+        // Listes pour la gestion des mots anciens
+        this.oldWordsList1 = []; // Tous les mots anciens disponibles
+        this.oldWordsList2 = []; // 7 mots sélectionnés pour la session courante
+        this.oldWordsList3 = []; // Mots ratés à répéter
 
         this.initializeElements();
         this.loadVocabularyData();
@@ -1530,18 +1536,128 @@ Partie 5;;;;`;
         this.elements.finalTotal.textContent = stats.total;
         this.elements.finalScore.textContent = `${score}%`;
 
+        // Gestion spéciale pour la révision des mots anciens
+        if (this.isOldWordsReview) {
+            if (this.isOldWordsMainSession) {
+                // Session principale : gérer la fin de série
+                this.handleOldWordsSeriesEnd();
+            } else {
+                // Répétition : gérer la fin de répétition
+                this.handleFailedWordsRepetitionEnd();
+            }
+        } else {
+            this.showScreen('results');
+        }
+    }
+
+    // Gère la fin d'une série de mots anciens
+    handleOldWordsSeriesEnd() {
+        // Parcourir les cartes pour identifier les réussies et les ratées
+        this.srs.currentSessionCards.forEach(card => {
+            const cardId = card.id || this.srs.generateCardId(card);
+            const wasCorrect = this.srs.progress[cardId] && this.srs.progress[cardId].wasCorrect;
+            
+            if (!wasCorrect) {
+                // Mot raté : l'ajouter à la liste 3
+                this.oldWordsList3.push(card);
+            }
+            // Les mots réussis sont automatiquement retirés de la liste 1 
+            // car ils ont été spliced lors de la préparation de la série
+        });
+
+        // Afficher les résultats avec un message spécial
         this.showScreen('results');
+        
+        // Ajouter un message indiquant la fin de série
+        setTimeout(() => {
+            if (this.oldWordsList3.length > 0) {
+                const message = `Série terminée !\n\n${this.oldWordsList3.length} mot(s) à répéter avant de continuer.\n\nCliquez sur "Répéter les mots ratés" pour commencer la répétition.`;
+                // alert(message);
+                
+                // Ajouter un bouton pour répéter les mots ratés
+                this.addRepeatFailedWordsButton();
+            } else {
+                const message = `Série terminée avec succès !\n\nTous les mots ont été réussis.\n\nCliquez sur "Retour au menu" pour continuer ou réviser une nouvelle série.`;
+                // alert(message);
+            }
+        }, 100);
+    }
+
+    // Ajoute un bouton pour répéter les mots ratés
+    addRepeatFailedWordsButton() {
+        // Vérifier si le bouton existe déjà
+        if (document.getElementById('repeat-failed-btn')) {
+            return;
+        }
+
+        const resultsActions = document.querySelector('.results-actions');
+        if (resultsActions) {
+            const repeatBtn = document.createElement('button');
+            repeatBtn.id = 'repeat-failed-btn';
+            repeatBtn.className = 'menu-btn';
+            repeatBtn.textContent = `Répéter les mots ratés (${this.oldWordsList3.length})`;
+            repeatBtn.onclick = () => this.startFailedWordsRepetition();
+            
+            // Insérer le bouton avant le bouton "Retour au menu"
+            const returnBtn = resultsActions.querySelector('button:last-child');
+            resultsActions.insertBefore(repeatBtn, returnBtn);
+        }
+    }
+
+    // Démarre la répétition des mots ratés (liste 3)
+    startFailedWordsRepetition() {
+        if (this.oldWordsList3.length === 0) {
+            alert('Aucun mot à répéter !');
+            return;
+        }
+
+        // Préparer le SRS avec la liste 3
+        this.srs.cards = [];
+        this.srs.remainingCards = [...this.oldWordsList3];
+        this.srs.currentSessionCards = [];
+        this.srs.currentCardIndex = 0;
+        
+        this.oldWordsList3.forEach(card => {
+            this.srs.addCard({...card});
+        });
+
+        // Préparer l'affichage
+        this.filteredData = this.oldWordsList3;
+        this.totalOldWordsAvailable = this.oldWordsList3.length;
+        
+        // Réinitialiser les statistiques de session
+        this.srs.sessionStats = {
+            correct: 0,
+            difficult: 0,
+            incorrect: 0,
+            total: 0,
+            totalAttempts: 0
+        };
+
+        // Marquer que c'est une répétition (pas session principale)
+        this.isOldWordsMainSession = false;
+
+        this.showScreen('revision');
+        this.showNextCard();
     }
 
     // Affiche un écran spécifique
     showScreen(screenName) {
+        // Nettoyer les boutons temporaires
+        this.cleanupTemporaryButtons();
+        
         // Réinitialiser les modes de révision quand on revient à la sélection
         if (screenName === 'selection') {
             this.isIntensiveReview = false;
             this.isOldWordsReview = false;
             this.isNumbersReview = false;
+            this.isOldWordsMainSession = false;
             // Réinitialiser aussi la sélection personnalisée
             this.customSelectedWords.clear();
+            // Nettoyer les listes de mots anciens
+            this.oldWordsList1 = [];
+            this.oldWordsList2 = [];
+            this.oldWordsList3 = [];
             // Mettre à jour les statistiques si elles sont visibles
             if (!this.elements.statsContent.classList.contains('hidden')) {
                 this.updateStatsDisplay();
@@ -1552,6 +1668,17 @@ Partie 5;;;;`;
             screen.classList.remove('active');
         });
         this.screens[screenName].classList.add('active');
+    }
+
+    // Nettoie les boutons temporaires
+    cleanupTemporaryButtons() {
+        const tempButtons = ['repeat-failed-btn', 'continue-series-btn'];
+        tempButtons.forEach(buttonId => {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                btn.remove();
+            }
+        });
     }
 
     // Démarre la révision des cartes difficiles
@@ -1617,12 +1744,12 @@ Partie 5;;;;`;
         this.startDifficultCardsReview();
     }
 
-    // Démarre la révision des mots anciens
-    startOldWordsReview() {
+    // Initialise le système de gestion des trois listes pour les mots anciens
+    initializeOldWordsListSystem() {
         // Obtenir toutes les cartes de tous les types
         const allCards = [...this.vocabularyData.mots, ...this.vocabularyData.verbes];
         
-        // Créer d'abord les cartes avec leurs IDs pour avoir accès aux données de progression
+        // Créer les cartes avec leurs IDs pour avoir accès aux données de progression
         const cardsWithIds = [];
         allCards.forEach(card => {
             const cardId = this.srs.generateCardId(card);
@@ -1635,27 +1762,65 @@ Partie 5;;;;`;
             }
         });
 
-        // Initialiser la session avec les cartes anciennes
-        const oldCardsCount = this.srs.initializeOldCardsSession(cardsWithIds);
+        // Liste 1 : tous les mots anciens (filtrés selon les critères)
+        this.oldWordsList1 = this.srs.getOldCards(cardsWithIds, 1000); // Pas de limite pour la liste 1
         
-        // Debug: afficher des informations
-        console.log('Cartes avec progression:', cardsWithIds.length);
-        console.log('Cartes anciennes trouvées:', oldCardsCount);
+        // Liste 2 : 7 mots sélectionnés pour la session (vide au début)
+        this.oldWordsList2 = [];
         
-        if (oldCardsCount === 0) {
+        // Liste 3 : mots ratés à répéter (vide au début)
+        this.oldWordsList3 = [];
+        
+        return this.oldWordsList1.length;
+    }
+
+    // Démarre la révision des mots anciens
+    startOldWordsReview() {
+        // Initialiser le système des trois listes
+        const totalOldWords = this.initializeOldWordsListSystem();
+        
+        if (totalOldWords === 0) {
             const threeDaysAgo = new Date(Date.now() - (3 * 24 * 60 * 60 * 1000));
             alert(`Aucun mot ancien trouvé !\n\nSeuls les mots non révisés depuis plus de 3 jours (avant le ${threeDaysAgo.toLocaleDateString('fr-FR')}) sont considérés comme anciens.\n\nContinuez vos révisions pour que certains mots deviennent "anciens" et nécessitent une révision de mémorisation à long terme.`);
             return;
         }
 
-        // Ajouter les cartes anciennes au système SRS
+        // Préparer la première série de 7 mots
+        this.prepareNextOldWordsSeries();
+    }
+
+    // Prépare la prochaine série de 7 mots depuis la liste 1
+    prepareNextOldWordsSeries() {
+        if (this.oldWordsList1.length === 0) {
+            // Plus de mots anciens à réviser
+            alert('Tous les mots anciens ont été révisés ! Retour au menu.');
+            this.showScreen('selection');
+            return;
+        }
+
+        // Prendre les 7 premiers mots de la liste 1 (ou moins s'il en reste moins)
+        const wordsToTake = Math.min(7, this.oldWordsList1.length);
+        this.oldWordsList2 = this.oldWordsList1.splice(0, wordsToTake);
+        
+        // Mélanger la liste 2
+        this.oldWordsList2 = this.srs.shuffleArray(this.oldWordsList2);
+        
+        // Vider la liste 3 pour cette nouvelle série
+        this.oldWordsList3 = [];
+        
+        // Préparer le SRS avec la liste 2
         this.srs.cards = [];
-        this.srs.remainingCards.forEach(card => {
+        this.srs.remainingCards = [...this.oldWordsList2];
+        this.srs.currentSessionCards = [];
+        this.srs.currentCardIndex = 0;
+        
+        this.oldWordsList2.forEach(card => {
             this.srs.addCard({...card});
         });
 
         // Préparer l'affichage
-        this.filteredData = this.srs.remainingCards;
+        this.filteredData = this.oldWordsList2;
+        this.totalOldWordsAvailable = this.oldWordsList2.length;
         
         // Réinitialiser les statistiques de session
         this.srs.sessionStats = {
@@ -1668,6 +1833,7 @@ Partie 5;;;;`;
 
         // Marquer que c'est une session de révision des mots anciens
         this.isOldWordsReview = true;
+        this.isOldWordsMainSession = true; // Session principale (pas répétition)
 
         this.showScreen('revision');
         this.showNextCard();
@@ -2132,6 +2298,51 @@ Partie 5;;;;`;
 
         this.showScreen('revision');
         this.showNextCard();
+    }
+
+    // Gère la fin de répétition des mots ratés
+    handleFailedWordsRepetitionEnd() {
+        // Vider la liste 3 après la répétition
+        this.oldWordsList3 = [];
+        
+        // Afficher les résultats normalement
+        this.showScreen('results');
+        
+        // Proposer de continuer avec une nouvelle série
+        setTimeout(() => {
+            if (this.oldWordsList1.length > 0) {
+                const message = `Répétition terminée !\n\nIl reste ${this.oldWordsList1.length} mot(s) ancien(s) à réviser.\n\nVoulez-vous continuer avec une nouvelle série de 7 mots ?`;
+                if (confirm(message)) {
+                    this.prepareNextOldWordsSeries();
+                } else {
+                    // Ajouter un bouton pour continuer plus tard
+                    this.addContinueSeriesButton();
+                }
+            } else {
+                alert('Félicitations ! Tous les mots anciens ont été révisés.\n\nRetour au menu principal.');
+            }
+        }, 100);
+    }
+
+    // Ajoute un bouton pour continuer une nouvelle série
+    addContinueSeriesButton() {
+        // Vérifier si le bouton existe déjà
+        if (document.getElementById('continue-series-btn')) {
+            return;
+        }
+
+        const resultsActions = document.querySelector('.results-actions');
+        if (resultsActions && this.oldWordsList1.length > 0) {
+            const continueBtn = document.createElement('button');
+            continueBtn.id = 'continue-series-btn';
+            continueBtn.className = 'menu-btn';
+            continueBtn.textContent = `Continuer (${this.oldWordsList1.length} mots restants)`;
+            continueBtn.onclick = () => this.prepareNextOldWordsSeries();
+            
+            // Insérer le bouton avant le bouton "Retour au menu"
+            const returnBtn = resultsActions.querySelector('button:last-child');
+            resultsActions.insertBefore(continueBtn, returnBtn);
+        }
     }
 }
 
