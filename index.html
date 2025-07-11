@@ -96,9 +96,17 @@
                         المراجعة المكثفة 🎯
                         <span>Réviser les mots les plus difficiles</span>
                     </button>
+                    <button class="type-btn special-mode-3" data-type="old-words">
+                        المراجعة القديمة 🕰️
+                        <span>Réviser les mots non vus depuis plus de 3 jours</span>
+                    </button>
                     <button class="type-btn special-mode-2" data-type="custom">
                         المراجعة الشخصية 🎨
                         <span>Choisissez précisément vos mots à réviser</span>
+                    </button>
+                    <button class="type-btn special-mode-4" data-type="numbers">
+                        مراجعة الأرقام 🔢
+                        <span>Entraînement aux chiffres arabes (1-999)</span>
                     </button>
                 </div>
 
@@ -152,6 +160,49 @@
                     </div>
                     
                     <button id="start-custom-btn" class="start-btn" disabled>Commencer la révision personnalisée</button>
+                </div>
+
+                <!-- Sélection des chiffres -->
+                <div id="numbers-selection" class="numbers-selection hidden">
+                    <div class="filter-header-main">
+                        <h3>🔢 Entraînement aux chiffres arabes</h3>
+                        <div class="selection-summary">
+                            <span id="numbers-selection-count">Configurez votre entraînement</span>
+                        </div>
+                    </div>
+
+                    <div class="numbers-controls">
+                        <div class="numbers-difficulty-selector">
+                            <label>Difficulté :</label>
+                            <select id="numbers-difficulty">
+                                <option value="1">1 chiffre (1-9)</option>
+                                <option value="2" selected>2 chiffres (10-99)</option>
+                                <option value="3">3 chiffres (100-999)</option>
+                                <option value="mixed">Mélange (1-999)</option>
+                            </select>
+                        </div>
+
+                        <div class="numbers-count-selector">
+                            <label>Nombre de chiffres à réviser :</label>
+                            <select id="numbers-count">
+                                <option value="10">10 chiffres</option>
+                                <option value="20" selected>20 chiffres</option>
+                                <option value="30">30 chiffres</option>
+                                <option value="50">50 chiffres</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="numbers-preview" id="numbers-preview">
+                        <h4>Exemple :</h4>
+                        <div class="numbers-preview-display">
+                            <span class="arabic-number" id="preview-number">٤٧</span>
+                            <span class="preview-arrow">→</span>
+                            <span class="french-number">47</span>
+                        </div>
+                    </div>
+                    
+                    <button id="start-numbers-btn" class="start-btn">Commencer l'entraînement</button>
                 </div>
             </div>
         </div>

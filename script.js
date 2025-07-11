@@ -1,3 +1,75 @@
+// Classe pour convertir les chiffres occidentaux en chiffres arabes
+class ArabicNumbers {
+    constructor() {
+        // Mapping des chiffres occidentaux vers les chiffres arabes
+        this.arabicDigits = {
+            '0': '٠',
+            '1': '١',
+            '2': '٢',
+            '3': '٣',
+            '4': '٤',
+            '5': '٥',
+            '6': '٦',
+            '7': '٧',
+            '8': '٨',
+            '9': '٩'
+        };
+    }
+
+    // Convertit un nombre occidental en chiffres arabes
+    toArabic(number) {
+        return number.toString().split('').map(digit => this.arabicDigits[digit] || digit).join('');
+    }
+
+    // Génère un nombre aléatoire selon la difficulté
+    generateRandomNumber(difficulty) {
+        let min, max;
+        
+        switch (difficulty) {
+            case '1':
+                min = 1;
+                max = 9;
+                break;
+            case '2':
+                min = 10;
+                max = 99;
+                break;
+            case '3':
+                min = 100;
+                max = 999;
+                break;
+            case 'mixed':
+                min = 1;
+                max = 999;
+                break;
+            default:
+                min = 10;
+                max = 99;
+        }
+        
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Génère un ensemble de nombres pour l'entraînement
+    generateNumberSet(difficulty, count) {
+        const numbers = [];
+        const usedNumbers = new Set();
+        
+        while (numbers.length < count) {
+            const number = this.generateRandomNumber(difficulty);
+            if (!usedNumbers.has(number)) {
+                usedNumbers.add(number);
+                numbers.push({
+                    western: number,
+                    arabic: this.toArabic(number)
+                });
+            }
+        }
+        
+        return numbers;
+    }
+}
+
 // Classe pour gérer le système de révision avec répétition espacée
 class SpacedRepetitionSystem {
     constructor() {
@@ -264,12 +336,117 @@ class SpacedRepetitionSystem {
         
         return this.remainingCards.length;
     }
+
+    // Obtient les cartes non révisées depuis plus de 3 jours
+    getOldCards(cards, maxCards = 50) {
+        const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000); // 3 jours en millisecondes
+        
+        // Filtre les cartes qui n'ont pas été révisées depuis plus de 3 jours
+        const oldCards = cards.filter(card => {
+            const progress = card.progress;
+            if (!progress || progress.attempts === 0) return false;
+            
+            // Carte considérée comme "ancienne" si dernière révision > 3 jours
+            return progress.lastReview && progress.lastReview < threeDaysAgo;
+        });
+
+        // Trie par ancienneté décroissante (les plus anciennes en premier)
+        oldCards.sort((a, b) => {
+            const aLastReview = a.progress.lastReview || 0;
+            const bLastReview = b.progress.lastReview || 0;
+            
+            // Si même ancienneté, priorise par nombre de tentatives (pour réviser les mots connus)
+            if (Math.abs(aLastReview - bLastReview) < (24 * 60 * 60 * 1000)) { // Même jour
+                return b.progress.attempts - a.progress.attempts;
+            }
+            
+            return aLastReview - bLastReview; // Plus ancien en premier
+        });
+
+        // Retourne au maximum maxCards cartes
+        return oldCards.slice(0, maxCards);
+    }
+
+    // Initialise une session de révision des mots anciens
+    initializeOldCardsSession(allCards) {
+        const oldCards = this.getOldCards(allCards);
+        
+        if (oldCards.length === 0) {
+            // Aucune carte ancienne trouvée
+            this.remainingCards = [];
+            this.currentSessionCards = [];
+            this.currentCardIndex = 0;
+            return 0;
+        } else {
+            this.remainingCards = [...oldCards];
+        }
+        
+        this.currentSessionCards = [];
+        this.currentCardIndex = 0;
+        
+        // Mélanger les cartes anciennes
+        this.shuffleArray(this.remainingCards);
+        
+        return this.remainingCards.length;
+    }
+
+    // ==========================================
+    // Méthodes pour les chiffres arabes
+    // ==========================================
+
+    // Convertit un nombre en chiffres arabes
+    convertToArabicNumerals(number) {
+        const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        return number.toString().split('').map(digit => arabicNumerals[parseInt(digit)]).join('');
+    }
+
+    // Génère un nombre aléatoire selon la difficulté
+    generateRandomNumber(difficulty) {
+        let min, max;
+        switch(difficulty) {
+            case '1': min = 1; max = 9; break;
+            case '2': min = 10; max = 99; break;
+            case '3': min = 100; max = 999; break;
+            case '4': min = 1000; max = 9999; break;
+            default: min = 10; max = 99;
+        }
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Génère les cartes de chiffres selon la configuration
+    generateNumberCards(difficulty, count) {
+        const cards = [];
+        const usedNumbers = new Set();
+
+        for (let i = 0; i < count; i++) {
+            let number;
+            do {
+                number = this.generateRandomNumber(difficulty);
+            } while (usedNumbers.has(number));
+            
+            usedNumbers.add(number);
+
+            cards.push({
+                type: 'numbers',
+                niveau: `Difficulté ${difficulty}`,
+                thematique: 'Chiffres arabes',
+                partie: 'Lecture',
+                number: number,
+                arabic: this.convertToArabicNumerals(number),
+                translation: number.toString(),
+                id: `numbers_${difficulty}_${number}`
+            });
+        }
+
+        return cards;
+    }
 }
 
 // Classe principale de l'application
 class VocabApp {
     constructor() {
         this.srs = new SpacedRepetitionSystem();
+        this.arabicNumbers = new ArabicNumbers();
         this.currentType = null;
         this.vocabularyData = {
             mots: [],
@@ -281,8 +458,11 @@ class VocabApp {
         };
         this.reverseMode = false;
         this.isIntensiveReview = false; // Initialiser le mode révision intensive
+        this.isOldWordsReview = false; // Initialiser le mode révision des mots anciens
+        this.isNumbersReview = false; // Initialiser le mode révision des chiffres
         this.customSelectedWords = new Set(); // Mots sélectionnés pour la révision personnalisée
         this.autoAudioMode = false; // Mode audio automatique
+        this.numbersData = []; // Données des chiffres pour l'entraînement
 
         this.initializeElements();
         this.loadVocabularyData();
@@ -346,7 +526,14 @@ class VocabApp {
             startCustomBtn: document.getElementById('start-custom-btn'),
             // Éléments audio
             arabicAudioBtn: document.getElementById('arabic-audio-btn'),
-            autoAudioToggle: document.getElementById('auto-audio-mode')
+            autoAudioToggle: document.getElementById('auto-audio-mode'),
+            // Éléments des chiffres
+            numbersSelection: document.getElementById('numbers-selection'),
+            numbersDifficulty: document.getElementById('numbers-difficulty'),
+            numbersCount: document.getElementById('numbers-count'),
+            numbersPreview: document.getElementById('numbers-preview'),
+            numbersSelectionCount: document.getElementById('numbers-selection-count'),
+            startNumbersBtn: document.getElementById('start-numbers-btn')
         };
     }
 
@@ -786,14 +973,21 @@ Partie 5;;;;`;
                 this.revealAnswer();
             }
         });
+
+        // Événements pour l'entraînement aux chiffres
+        this.elements.numbersDifficulty.addEventListener('change', () => this.updateNumbersPreview());
+        this.elements.numbersCount.addEventListener('change', () => this.updateNumbersPreview());
+        this.elements.startNumbersBtn.addEventListener('click', () => this.startNumbersReview());
     }
 
     // Sélectionne le type de vocabulaire
     selectType(type) {
         this.currentType = type;
         
-        // Réinitialiser le mode révision intensive
+        // Réinitialiser les modes de révision
         this.isIntensiveReview = false;
+        this.isOldWordsReview = false;
+        this.isNumbersReview = false;
         
         // Met à jour les boutons
         this.elements.typeButtons.forEach(btn => {
@@ -803,6 +997,7 @@ Partie 5;;;;`;
         // Masquer tous les types de sélection
         this.elements.filters.classList.add('hidden');
         this.elements.customSelection.classList.add('hidden');
+        this.elements.numbersSelection.classList.add('hidden');
 
         // Si c'est le mode révision intensive
         if (type === 'revision') {
@@ -810,10 +1005,23 @@ Partie 5;;;;`;
             return;
         }
 
+        // Si c'est le mode révision des mots anciens
+        if (type === 'old-words') {
+            this.startOldWordsReview();
+            return;
+        }
+
         // Si c'est le mode révision personnalisée
         if (type === 'custom') {
             this.elements.customSelection.classList.remove('hidden');
             this.initializeCustomSelection();
+            return;
+        }
+
+        // Si c'est le mode révision des chiffres
+        if (type === 'numbers') {
+            this.elements.numbersSelection.classList.remove('hidden');
+            this.updateNumbersPreview();
             return;
         }
 
@@ -1088,6 +1296,10 @@ Partie 5;;;;`;
         // Texte différent selon le mode
         if (this.isIntensiveReview) {
             this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} cartes difficiles maîtrisées`;
+        } else if (this.isOldWordsReview) {
+            this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} mots anciens révisés`;
+        } else if (this.isNumbersReview) {
+            this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} chiffres maîtrisés`;
         } else {
             this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} cartes maîtrisées`;
         }
@@ -1133,6 +1345,12 @@ Partie 5;;;;`;
             existingIntensiveIndicator.remove();
         }
 
+        // Retirer l'indicateur de révision ancienne existant s'il existe
+        const existingOldIndicator = this.elements.flashcard.querySelector('.card-old-indicator');
+        if (existingOldIndicator) {
+            existingOldIndicator.remove();
+        }
+
         // Ajouter l'indicateur de mode
         const modeIndicator = document.createElement('div');
         modeIndicator.className = `card-mode-indicator ${this.reverseMode ? 'reverse' : ''}`;
@@ -1147,6 +1365,14 @@ Partie 5;;;;`;
             this.elements.flashcard.appendChild(intensiveIndicator);
         }
 
+        // Ajouter l'indicateur de révision des chiffres si c'est le cas
+        if (this.isNumbersReview) {
+            const numbersIndicator = document.createElement('div');
+            numbersIndicator.className = 'card-numbers-indicator';
+            numbersIndicator.textContent = '� Entraînement chiffres';
+            this.elements.flashcard.appendChild(numbersIndicator);
+        }
+
         // Ajouter l'indicateur de répétition si la carte revient
         if (card.needsReview) {
             const repeatIndicator = document.createElement('div');
@@ -1155,17 +1381,26 @@ Partie 5;;;;`;
             this.elements.flashcard.appendChild(repeatIndicator);
         }
 
-        if (this.reverseMode) {
-            // Mode inversé : afficher la traduction française
+        if (this.reverseMode && !this.isNumbersReview) {
+            // Mode inversé : afficher la traduction française (sauf pour les chiffres)
             this.elements.arabicText.textContent = card.translation;
             this.elements.arabicText.classList.add('reverse-mode');
         } else {
-            // Mode normal : afficher l'arabe
+            // Mode normal : afficher l'arabe (ou le chiffre arabe)
             this.elements.arabicText.textContent = card.arabic;
             this.elements.arabicText.classList.remove('reverse-mode');
         }
 
-        this.elements.cardType.textContent = `${card.type} - ${card.niveau}`;
+        // Affichage spécial pour les chiffres
+        if (this.isNumbersReview) {
+            this.elements.arabicText.classList.add('arabic-number-display');
+        } else {
+            this.elements.arabicText.classList.remove('arabic-number-display');
+        }
+
+        this.elements.cardType.textContent = this.isNumbersReview ? 
+            `${card.niveau} - ${card.partie}` : 
+            `${card.type} - ${card.niveau}`;
         
         // Indicateur de difficulté
         const failureRate = card.progress.attempts > 0 ? 
@@ -1180,18 +1415,26 @@ Partie 5;;;;`;
         document.querySelector('.card-front').style.display = 'none';
         document.querySelector('.card-back').classList.remove('hidden');
 
-        if (this.reverseMode) {
-            // Mode inversé : montrer l'arabe comme réponse
+        if (this.reverseMode && !this.isNumbersReview) {
+            // Mode inversé : montrer l'arabe comme réponse (sauf pour les chiffres)
             this.elements.translationText.textContent = card.arabic;
             this.elements.translationText.classList.add('reverse-mode');
         } else {
-            // Mode normal : montrer la traduction française
+            // Mode normal : montrer la traduction française (ou le chiffre occidental)
             this.elements.translationText.textContent = card.translation;
             this.elements.translationText.classList.remove('reverse-mode');
         }
 
         // Informations supplémentaires selon le type
-        if (card.type === 'mots') {
+        if (card.type === 'numbers') {
+            this.elements.additionalInfo.innerHTML = `
+                <div class="number-info">
+                    <div><strong>Chiffre arabe :</strong> ${card.arabic}</div>
+                    <div><strong>Chiffre occidental :</strong> ${card.translation}</div>
+                    <div class="number-tip">💡 Astuce : Mémorisez la forme de chaque chiffre arabe</div>
+                </div>
+            `;
+        } else if (card.type === 'mots') {
             if (this.reverseMode) {
                 this.elements.additionalInfo.innerHTML = `
                     <div><strong>الكلمة :</strong> ${card.arabic}</div>
@@ -1292,9 +1535,11 @@ Partie 5;;;;`;
 
     // Affiche un écran spécifique
     showScreen(screenName) {
-        // Réinitialiser le mode révision intensive quand on revient à la sélection
+        // Réinitialiser les modes de révision quand on revient à la sélection
         if (screenName === 'selection') {
             this.isIntensiveReview = false;
+            this.isOldWordsReview = false;
+            this.isNumbersReview = false;
             // Réinitialiser aussi la sélection personnalisée
             this.customSelectedWords.clear();
             // Mettre à jour les statistiques si elles sont visibles
@@ -1370,6 +1615,67 @@ Partie 5;;;;`;
     // Méthode appelée depuis les résultats pour réviser les cartes difficiles
     startDifficultCardsReviewFromResults() {
         this.startDifficultCardsReview();
+    }
+
+    // Démarre la révision des mots anciens
+    startOldWordsReview() {
+        // Obtenir toutes les cartes de tous les types
+        const allCards = [...this.vocabularyData.mots, ...this.vocabularyData.verbes];
+        
+        // Créer d'abord les cartes avec leurs IDs pour avoir accès aux données de progression
+        const cardsWithIds = [];
+        allCards.forEach(card => {
+            const cardId = this.srs.generateCardId(card);
+            if (this.srs.progress[cardId]) {
+                cardsWithIds.push({
+                    ...card,
+                    id: cardId,
+                    progress: this.srs.progress[cardId]
+                });
+            }
+        });
+
+        // Initialiser la session avec les cartes anciennes
+        const oldCardsCount = this.srs.initializeOldCardsSession(cardsWithIds);
+        
+        // Debug: afficher des informations
+        console.log('Cartes avec progression:', cardsWithIds.length);
+        console.log('Cartes anciennes trouvées:', oldCardsCount);
+        
+        if (oldCardsCount === 0) {
+            const threeDaysAgo = new Date(Date.now() - (3 * 24 * 60 * 60 * 1000));
+            alert(`Aucun mot ancien trouvé !\n\nSeuls les mots non révisés depuis plus de 3 jours (avant le ${threeDaysAgo.toLocaleDateString('fr-FR')}) sont considérés comme anciens.\n\nContinuez vos révisions pour que certains mots deviennent "anciens" et nécessitent une révision de mémorisation à long terme.`);
+            return;
+        }
+
+        // Ajouter les cartes anciennes au système SRS
+        this.srs.cards = [];
+        this.srs.remainingCards.forEach(card => {
+            this.srs.addCard({...card});
+        });
+
+        // Préparer l'affichage
+        this.filteredData = this.srs.remainingCards;
+        
+        // Réinitialiser les statistiques de session
+        this.srs.sessionStats = {
+            correct: 0,
+            difficult: 0,
+            incorrect: 0,
+            total: 0,
+            totalAttempts: 0
+        };
+
+        // Marquer que c'est une session de révision des mots anciens
+        this.isOldWordsReview = true;
+
+        this.showScreen('revision');
+        this.showNextCard();
+    }
+
+    // Méthode appelée depuis les résultats pour réviser les mots anciens
+    startOldWordsReviewFromResults() {
+        this.startOldWordsReview();
     }
 
     // Bascule l'affichage des statistiques
@@ -1741,6 +2047,12 @@ Partie 5;;;;`;
         if (this.isIntensiveReview) {
             // Redémarrer une révision intensive
             this.startDifficultCardsReview();
+        } else if (this.isOldWordsReview) {
+            // Redémarrer une révision des mots anciens
+            this.startOldWordsReview();
+        } else if (this.isNumbersReview) {
+            // Redémarrer l'entraînement aux chiffres
+            this.startNumbersReview();
         } else if (this.customSelectedWords && this.customSelectedWords.size > 0) {
             // Redémarrer une révision personnalisée
             this.startCustomRevision();
@@ -1748,6 +2060,78 @@ Partie 5;;;;`;
             // Redémarrer une révision normale
             this.startRevision();
         }
+    }
+
+    // ==========================================
+    // Méthodes pour l'entraînement aux chiffres
+    // ==========================================
+
+    // Met à jour l'aperçu des chiffres
+    updateNumbersPreview() {
+        const difficulty = this.elements.numbersDifficulty.value;
+        const count = this.elements.numbersCount.value;
+        
+        // Générer un exemple de chiffre
+        const exampleNumber = this.arabicNumbers.generateRandomNumber(difficulty);
+        const arabicDisplay = this.arabicNumbers.toArabic(exampleNumber);
+        
+        // Mettre à jour l'aperçu
+        document.getElementById('preview-number').textContent = arabicDisplay;
+        document.querySelector('.french-number').textContent = exampleNumber;
+        
+        // Mettre à jour le texte de sélection
+        let difficultyText = '';
+        switch (difficulty) {
+            case '1':
+                difficultyText = '1 chiffre (1-9)';
+                break;
+            case '2':
+                difficultyText = '2 chiffres (10-99)';
+                break;
+            case '3':
+                difficultyText = '3 chiffres (100-999)';
+                break;
+            case 'mixed':
+                difficultyText = 'Mélange (1-999)';
+                break;
+        }
+        
+        this.elements.numbersSelectionCount.textContent = `${count} chiffres - ${difficultyText}`;
+    }
+
+    // Démarre l'entraînement aux chiffres
+    startNumbersReview() {
+        const difficulty = this.elements.numbersDifficulty.value;
+        const count = parseInt(this.elements.numbersCount.value);
+        
+        // Générer les données des chiffres
+        this.numbersData = this.arabicNumbers.generateNumberSet(difficulty, count);
+        
+        // Convertir en format compatible avec le système SRS
+        this.filteredData = this.numbersData.map(item => ({
+            id: `number_${item.western}`,
+            type: 'numbers',
+            arabic: item.arabic,
+            translation: item.western.toString(),
+            niveau: 'Chiffres',
+            thematique: 'Nombres arabes',
+            partie: difficulty === 'mixed' ? 'Mélange' : `${difficulty} chiffre${difficulty > 1 ? 's' : ''}`
+        }));
+
+        // Initialiser le système de révision
+        this.srs.cards = [];
+        this.filteredData.forEach(item => this.srs.addCard(item));
+        
+        // Démarrer une session avec ordre aléatoire
+        this.srs.resetSession();
+
+        // Marquer que c'est une révision des chiffres
+        this.isNumbersReview = true;
+
+        console.log('Démarrage de l\'entraînement aux chiffres:', this.filteredData.length, 'chiffres');
+
+        this.showScreen('revision');
+        this.showNextCard();
     }
 }
 
