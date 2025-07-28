@@ -651,11 +651,70 @@ Partie 2;;
 جَزَائِرِيٌّ;جَزَائِرِيُّونَ;Algérien
 هُنَا;;Ici
 Partie 3;;
+إِنْسَانٌ;نَاسٌ;Gens
+ذَكَرٌ;ذُكُورٌ;Mâle / Homme
+أُنْثَى;إِنَاثٌ;Femelle / Femme
+شَعْبٌ;شُعُوبٌ;Peuple
+قَبِيلَةٌ;قَبَائِلُ;Tribu
+أَكْرَمُ;أَكْرَمُ;Plus noble / Généreux
+أَتْقَى;أَتْقَى;Plus pieux
 Partie 4;;
+تَعَالَ يَا صَدِيقِي;;Viens Ô mon ami
+مَا اسْمُكَ؟;;Quel est ton nom
+اسْمِي أَنَس.;;Mon nom est Anas.
+أَنَا بِلَال.;;Je suis Bilal.
+أَنَا مَسْرُورٌ بِلِقَائِكَ.;;Je suis ravi de te rencontrer.
+مَا جِنْسِيَّتُكَ؟;;Quelle est ta nationalité
+أَنَا فَرَنْسِيٌّ.;;Je suis français.
+أَنَا مِنْ فَرَنْسَا.;;Je viens de france.
+أَبْشِرْ يَا أَنَس.;;Réjouis toi Ô Anas.
+شَيْئًا فَشَيْئًا.;;Petit à petit.
+أَيْنَ تَسْكُنُ؟ أَسْكُنُ فِي...;;Où habites tu ? J'habite...
+أَيْنَ تَدْرُسُ؟ أَدْرُسُ فِي...;;Où étudies tu ? J'étudie...
+أَيْنَ تَعْمَلُ؟ أَعْمَلُ فِي...;;Où travailles tu ? Je travaille...
+مَا لُغَتُكَ؟ لُغَتِي الْفَرَنْسِيَّةُ;;Quelle est ta langue ? Ma langue est le français
+هَلْ تَتَحَدَّثُ لُغَاتٍ أُخْرَى؟;;Est-ce que tu parles d'autres langues
+هَلْ لَدَيْكَ إِخْوَةٌ وَأَخَوَاتٌ؟;;As tu des frères et soeurs ?
+هَلْ سَافَرْتَ إِلَى الْخَارِجِ قَبْلَ ذَلِكَ؟;;As tu voyagé à l'étranger auparavant ?
+هَلْ تَعِيشُ هُنَا مُنْذُ وَقْتٍ طَوِيلٍ؟;;Vis tu ici depuis longtemps
+مَا هِيَ هِوَايَاتُكَ؟;;Quelles sont tes passions
+هَلْ تُحِبُّ الرِّيَاضَةَ؟;;Aimes tu le sport ?
+كَمْ سِنُّكَ؟ ثَلَاثُونَ سَنَةً. ;;Quelle âge as tu ? 30 ans ?
 Partie 5;;
+أَنَا;;Je
+نَحْنُ;;Nous
+أَنْتَ;;Tu (masculin)
+أَنْتِ;;Tu (féminin)
+أَنْتُمَا;;Vous (deux)
+أَنْتُمْ;;Vous (pluriel masculin)
+أَنْتُنَّ;;Vous (pluriel féminin)
+هُوَ;;Il
+هِيَ;;Elle
+هُمَا;;Eux deux
+هُمْ;;Ils
+هُنَّ;;Elles
 Thématique 3;;
 Partie 1;;
+كُلٌّ;;Tout
+صَالَةٌ;صَالَاتٌ;Salon / Salle / Hall
+بَيْنَ;;Entre
+مَحَبَّةٌ;;Amour
+عَلَاقَةٌ;عَلَاقَاتٌ;Relation
+طَيِّبَةٌ;طَيِّبَةٌ;Bonne
+تَفْصِيلٌ;تَفَاصِيلٌ;Détail
+يَوْمِيَّةٌ;يَوْمِيَّةٌ;Quotidienne
+فَرْقٌ;فُرُوقٌ;Différence
+عَادَةٌ;عَادَاتٌ;Habitude
+كَيْفِيَّةٌ;كَيْفِيَّاتٌ;Manière
+تَعَلُّمٌ;;Apprentissage
+سَنَةٌ;سَنَوَاتٌ;Année
+دِرَاسِيَّةٌ;;Scolaire
+وَاحِدَةٌ;;Une
 Partie 2;;
+الآن;الآن;Maintenant
+أَخٌ;إِخْوَة/إِخْوَان;Frère (Religion/Sang)
+;عِنْدِي;J'ai
+أَسْئِلَة;سُؤَال;Question
 Partie 3;;
 Partie 4;;
 Partie 5;;
@@ -774,10 +833,17 @@ Partie 2;;;;
 أَبْشَرَ;يُبْشِرُ;أَبْشِرْ;إِبْشَارًا;Se réjouir
 شَاءَ;يَشَاءُ;شَأْ;شَيْئًا;Vouloir
 Partie 3;;;;
+خَلَقَ;يَخْلُقُ;اخْلُقْ;خَلْقًا;Créer
+جَعَلَ;يَجْعَلُ;اجْعَلْ;جَعْلاً;Rendre
 Partie 4;;;;
 Partie 5;;;;
 Thématique 3;;;;
 Partie 1;;;;
+ذَهَبَ;يَذْهَبُ;اذْهَبْ;ذَهَابًا;Aller
+ظَهَرَ;يَظْهَرُ;اِظْهَرْ;ظُهُورًا;Apparaître
+اِطْمَأَنَّ;يَطْمَئِنُّ;اِطْمَئِنَّ;اِطْمِئْنَانًا;Être rassuré
+تَعَوَّدَ;يَتَعَوَّدُ;تَعَوَّدْ;تَعَوُّدًا;Être habitué
+تَعَجَّبَ;يَتَعَجَّبُ;تَعَجَّبْ;تَعَجُّبًا;Être surpris
 Partie 2;;;;
 Partie 3;;;;
 Partie 4;;;;
