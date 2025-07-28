@@ -656,8 +656,8 @@ Partie 3;;
 أُنْثَى;إِنَاثٌ;Femelle / Femme
 شَعْبٌ;شُعُوبٌ;Peuple
 قَبِيلَةٌ;قَبَائِلُ;Tribu
-أَكْرَمُ;أَكْرَمُ;Plus noble / Généreux
-أَتْقَى;أَتْقَى;Plus pieux
+أَكْرَمُ;;Plus noble / Généreux
+أَتْقَى;;Plus pieux
 Partie 4;;
 تَعَالَ يَا صَدِيقِي;;Viens Ô mon ami
 مَا اسْمُكَ؟;;Quel est ton nom
@@ -715,6 +715,7 @@ Partie 2;;
 أَخٌ;إِخْوَة/إِخْوَان;Frère (Religion/Sang)
 ;عِنْدِي;J'ai
 أَسْئِلَة;سُؤَال;Question
+à completer;;à compléter
 Partie 3;;
 Partie 4;;
 Partie 5;;
