@@ -612,7 +612,7 @@ Partie 4;;
 صَبَاحُ الْخَيْرِ;;Bonjour
 مَسَاءُ الْخَيْرِ;;Bonsoir
 لَيْلَةٌ سَعِيدَةٌ;;Bonne nuit
-تَصْبَحُ عَلَى خَيْرٍ;;Bonne nuit
+تُصْبِحُ عَلَى خَيْرٍ;;Bonne nuit
 إِلَى اللِّقَاءِ;;À la prochaine
 أَرَاكَ غَدًا;;Je te vois demain
 أَرَاكَ لَاحِقًا;;Je te vois plus tard
@@ -700,9 +700,9 @@ Partie 1;;
 بَيْنَ;;Entre
 مَحَبَّةٌ;;Amour
 عَلَاقَةٌ;عَلَاقَاتٌ;Relation
-طَيِّبَةٌ;طَيِّبَةٌ;Bonne
+طَيِّبَةٌ;;Bonne
 تَفْصِيلٌ;تَفَاصِيلٌ;Détail
-يَوْمِيَّةٌ;يَوْمِيَّةٌ;Quotidienne
+يَوْمِيَّةٌ;;Quotidienne
 فَرْقٌ;فُرُوقٌ;Différence
 عَادَةٌ;عَادَاتٌ;Habitude
 كَيْفِيَّةٌ;كَيْفِيَّاتٌ;Manière
@@ -711,9 +711,9 @@ Partie 1;;
 دِرَاسِيَّةٌ;;Scolaire
 وَاحِدَةٌ;;Une
 Partie 2;;
-الآن;الآن;Maintenant
+الآن;;Maintenant
 أَخٌ;إِخْوَة/إِخْوَان;Frère (Religion/Sang)
-;عِنْدِي;J'ai
+عِنْدِي;;J'ai
 أَسْئِلَة;سُؤَال;Question
 à completer;;à compléter
 Partie 3;;
