@@ -728,9 +728,9 @@ Partie 2;;
 الَّذِي;;Celui qui
 مَسْجِدٌ;مَسَاجِدُ;Mosquée
 خَلْفَ;;Derrière
-غُرْفَةٌ;غُرُفٌ;Chambre
+غُرْفَةٌ;غُرَفٌ;Chambre
 Partie 3;;
-أَهْلٌ;أَهْلُونَ;Chambre
+أَهْلٌ;أَهْلُونَ;Gens
 ذِكْرٌ;أَذْكَارٌ;Évocation/Rappel
 Partie 4;;
 Partie 5;;
