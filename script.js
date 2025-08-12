@@ -695,7 +695,7 @@ Partie 5;;
 هُنَّ;;Elles
 Thématique 3;;
 Partie 1;;
-كُلٌّ;;Tout
+ٌجَمِيع;;Tout
 صَالَةٌ;صَالَاتٌ;Salon / Salle / Hall
 بَيْنَ;;Entre
 مَحَبَّةٌ;;Amour
@@ -711,12 +711,27 @@ Partie 1;;
 دِرَاسِيَّةٌ;;Scolaire
 وَاحِدَةٌ;;Une
 Partie 2;;
-الآن;;Maintenant
-أَخٌ;إِخْوَة/إِخْوَان;Frère (Religion/Sang)
+الآنَ;;Maintenant
+أَخٌ;إِخْوَةٌ/إِخْوَانٌ;Frère (Religion/Sang)
 عِنْدِي;;J'ai
-أَسْئِلَة;سُؤَال;Question
-à completer;;à compléter
+سُؤَالٌ;أَسْئِلَةٌ;Question 
+لَوْ;;Si
+قَبْلَ;;Avant
+بَلَدٌ;بِلَادٌ/بُلْدَانٌ;Pays
+نَعَمْ;;Oui
+زِيَارَةٌ;زِيَارَاتٌ;Visite
+أُمٌّ;أُمَّهَاتٌ;Mère
+كَبِيرٌ;;Grand
+هُنَاكَ;;Là bas
+بَعْضٌ;;Quelques / Certains
+مَرَكِزٌ;مَرَاكِزُ;Centre
+الَّذِي;;Celui qui
+مَسْجِدٌ;مَسَاجِدُ;Mosquée
+خَلْفَ;;Derrière
+غُرْفَةٌ;غُرُفٌ;Chambre
 Partie 3;;
+أَهْلٌ;أَهْلُونَ;Chambre
+ذِكْرٌ;أَذْكَارٌ;Évocation/Rappel
 Partie 4;;
 Partie 5;;
 Thématique 4;;
@@ -846,7 +861,15 @@ Partie 1;;;;
 تَعَوَّدَ;يَتَعَوَّدُ;تَعَوَّدْ;تَعَوُّدًا;Être habitué
 تَعَجَّبَ;يَتَعَجَّبُ;تَعَجَّبْ;تَعَجُّبًا;Être surpris
 Partie 2;;;;
+قَعَدَ;يَقْعُدُ;اُقْعُدْ;قُعُودًا;S’asseoir
+بَارَكَ;يُبَارِكُ;بَارِكْ;مُبَارَكَةً;Bénir
+سَمَحَ;يَسْمَحُ;اِسْمَحْ;سَمْحًا;Permettre
+رَجَعَ;يَرْجِعُ;اِرْجِعْ;رُجُوعًا;Revenir
+أَرَى;يُرِي;أَرِ;إِرَاءَةً;Faire voir
 Partie 3;;;;
+سَأَلَ;يَسْأَلٌ;اِسَأَلْ/سَلْ;سُؤَالًا;Questionner/Demander
+كَانَ;يَكُونُ;كُنْ/سَلْ;كَوْنًا;Être
+عَلِمَ;يَعْلَمُ;اِعْلَمْ;عٍلْمًا;Savoir
 Partie 4;;;;
 Partie 5;;;;
 Thématique 4;;;;
