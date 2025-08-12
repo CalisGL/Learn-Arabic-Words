@@ -695,7 +695,7 @@ Partie 5;;
 هُنَّ;;Elles
 Thématique 3;;
 Partie 1;;
-ٌجَمِيع;;Tout
+جَمِيعٌ;;Tout
 صَالَةٌ;صَالَاتٌ;Salon / Salle / Hall
 بَيْنَ;;Entre
 مَحَبَّةٌ;;Amour
