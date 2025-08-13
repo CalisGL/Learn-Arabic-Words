@@ -1368,6 +1368,9 @@ Partie 5;;;;`;
 
         this.showScreen('revision');
         this.showNextCard();
+        
+        // Sauvegarder immédiatement l'état de la nouvelle session
+        setTimeout(() => this.saveCurrentSession(), 100);
     }
 
     // Affiche la carte suivante
@@ -1793,6 +1796,11 @@ Partie 5;;;;`;
             this.saveCurrentSession();
         });
         
+        // Sauvegarder lors du rechargement de page
+        window.addEventListener('unload', () => {
+            this.saveCurrentSession();
+        });
+        
         // Sauvegarder lors de la perte de focus (changement d'application)
         window.addEventListener('blur', () => {
             this.saveCurrentSession();
@@ -1811,6 +1819,11 @@ Partie 5;;;;`;
                 this.saveCurrentSession();
             }
         }, 30000);
+        
+        // Sauvegarder au clic sur le bouton retour du navigateur
+        window.addEventListener('popstate', () => {
+            this.saveCurrentSession();
+        });
     }
 
     // Vérifie si on est dans une session active
@@ -1921,10 +1934,17 @@ Partie 5;;;;`;
                 return;
             }
 
-            // Proposer de restaurer la session
+            // Proposer de restaurer la session avec plus d'informations
+            const sessionType = this.getSessionTypeDescription(sessionData);
+            const timeAgo = this.getTimeAgoDescription(sessionAge);
+            
             const shouldRestore = confirm(
-                'Une session de révision interrompue a été détectée.\n\n' +
-                'Voulez-vous reprendre où vous vous êtes arrêté(e) ?'
+                '🔄 Session interrompue détectée\n\n' +
+                `Type de révision : ${sessionType}\n` +
+                `Interrompue il y a : ${timeAgo}\n\n` +
+                'Voulez-vous reprendre où vous vous êtes arrêté(e) ?\n\n' +
+                '✅ Oui - Reprendre la session\n' +
+                '❌ Non - Commencer une nouvelle session'
             );
 
             if (!shouldRestore) {
@@ -2028,6 +2048,45 @@ Partie 5;;;;`;
 
         // Mettre à jour la barre de progression
         this.updateProgressBar();
+    }
+
+    // Obtient une description du type de session
+    getSessionTypeDescription(sessionData) {
+        if (sessionData.isNumbersReview) {
+            return 'Révision des chiffres arabes 🔢';
+        } else if (sessionData.isOldWordsReview) {
+            if (sessionData.isOldWordsMainSession) {
+                return 'Révision des mots anciens 🕰️';
+            } else {
+                return 'Répétition des mots ratés 🔄';
+            }
+        } else if (sessionData.isIntensiveReview) {
+            return 'Révision intensive (cartes difficiles) 🎯';
+        } else if (sessionData.currentType === 'mots') {
+            return 'Révision des mots (الاسماء) 📚';
+        } else if (sessionData.currentType === 'verbes') {
+            return 'Révision des verbes (الافعال) 🔄';
+        } else {
+            return 'Révision personnalisée 🎨';
+        }
+    }
+
+    // Obtient une description du temps écoulé
+    getTimeAgoDescription(milliseconds) {
+        const seconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) {
+            return `${days} jour${days > 1 ? 's' : ''}`;
+        } else if (hours > 0) {
+            return `${hours} heure${hours > 1 ? 's' : ''}`;
+        } else if (minutes > 0) {
+            return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+        } else {
+            return 'quelques secondes';
+        }
     }
 
     // Démarre la révision des cartes difficiles
