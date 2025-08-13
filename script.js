@@ -1828,17 +1828,35 @@ Partie 5;;;;`;
 
     // Vérifie si on est dans une session active
     isInSession() {
-        return this.screens.revision.classList.contains('active') || 
-               this.screens.results.classList.contains('active');
+        // Vérifier si on a des données de session actives
+        const hasActiveRevision = this.srs && (this.srs.cards.length > 0 || this.srs.remainingCards.length > 0);
+        const hasFilteredData = this.filteredData && this.filteredData.length > 0;
+        const isRevisionScreen = this.screens && this.screens.revision && this.screens.revision.classList.contains('active');
+        const isResultsScreen = this.screens && this.screens.results && this.screens.results.classList.contains('active');
+        
+        return hasActiveRevision || hasFilteredData || isRevisionScreen || isResultsScreen;
     }
 
     // Sauvegarde la session actuelle
     saveCurrentSession() {
-        if (!this.isInSession()) {
-            // Pas de session active, nettoyer la sauvegarde
+        // Forcer la sauvegarde si on a des données de révision actives, même sans écran actif
+        const hasRevisionData = this.srs && (this.srs.cards.length > 0 || this.srs.remainingCards.length > 0);
+        const hasFilteredData = this.filteredData && this.filteredData.length > 0;
+        
+        if (!this.isInSession() && !hasRevisionData && !hasFilteredData) {
+            // Vraiment pas de session active, nettoyer la sauvegarde
             localStorage.removeItem('arabicVocabSession');
+            console.log('Aucune session active - sauvegarde nettoyée');
             return;
         }
+
+        console.log('Sauvegarde de session en cours...', {
+            isInSession: this.isInSession(),
+            hasRevisionData,
+            hasFilteredData,
+            srsCards: this.srs ? this.srs.cards.length : 0,
+            remainingCards: this.srs ? this.srs.remainingCards.length : 0
+        });
 
         const sessionData = {
             timestamp: Date.now(),
@@ -1919,17 +1937,26 @@ Partie 5;;;;`;
 
     // Restaure une session sauvegardée
     restoreSession() {
+        console.log('Vérification de session sauvegardée...');
         const savedSession = localStorage.getItem('arabicVocabSession');
-        if (!savedSession) return;
+        if (!savedSession) {
+            console.log('Aucune session sauvegardée trouvée');
+            return;
+        }
 
+        console.log('Session sauvegardée trouvée, tentative de restauration...');
         try {
             const sessionData = JSON.parse(savedSession);
+            console.log('Données de session:', sessionData);
             
             // Vérifier que la session n'est pas trop ancienne (max 24h)
             const sessionAge = Date.now() - sessionData.timestamp;
             const maxAge = 24 * 60 * 60 * 1000; // 24 heures
             
+            console.log(`Session âgée de ${sessionAge}ms (max: ${maxAge}ms)`);
+            
             if (sessionAge > maxAge) {
+                console.log('Session trop ancienne, suppression...');
                 localStorage.removeItem('arabicVocabSession');
                 return;
             }
@@ -1937,6 +1964,8 @@ Partie 5;;;;`;
             // Proposer de restaurer la session avec plus d'informations
             const sessionType = this.getSessionTypeDescription(sessionData);
             const timeAgo = this.getTimeAgoDescription(sessionAge);
+            
+            console.log(`Type de session: ${sessionType}, Il y a: ${timeAgo}`);
             
             const shouldRestore = confirm(
                 '🔄 Session interrompue détectée\n\n' +
@@ -1948,10 +1977,12 @@ Partie 5;;;;`;
             );
 
             if (!shouldRestore) {
+                console.log('Utilisateur a refusé la restauration');
                 localStorage.removeItem('arabicVocabSession');
                 return;
             }
 
+            console.log('Utilisateur a accepté la restauration, début du processus...');
             this.doRestoreSession(sessionData);
         } catch (error) {
             console.error('Erreur lors de la restauration de session:', error);
@@ -2087,6 +2118,38 @@ Partie 5;;;;`;
         } else {
             return 'quelques secondes';
         }
+    }
+
+    // Fonction de débogage - à utiliser dans la console du navigateur
+    debugSession() {
+        console.log('=== DEBUG SESSION ===');
+        console.log('Session sauvegardée:', localStorage.getItem('arabicVocabSession'));
+        console.log('isInSession():', this.isInSession());
+        console.log('Écrans disponibles:', this.screens);
+        console.log('SRS état:', {
+            cards: this.srs ? this.srs.cards.length : 'N/A',
+            remainingCards: this.srs ? this.srs.remainingCards.length : 'N/A',
+            currentCardIndex: this.srs ? this.srs.currentCardIndex : 'N/A'
+        });
+        console.log('Données filtrées:', this.filteredData ? this.filteredData.length : 'N/A');
+        console.log('Type actuel:', this.currentType);
+        console.log('Modes:', {
+            isIntensiveReview: this.isIntensiveReview,
+            isOldWordsReview: this.isOldWordsReview,
+            isNumbersReview: this.isNumbersReview
+        });
+    }
+
+    // Force la sauvegarde manuelle - à utiliser dans la console
+    forceSave() {
+        console.log('Force sauvegarde...');
+        this.saveCurrentSession();
+    }
+
+    // Force la restauration manuelle - à utiliser dans la console
+    forceRestore() {
+        console.log('Force restauration...');
+        this.restoreSession();
     }
 
     // Démarre la révision des cartes difficiles
