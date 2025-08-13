@@ -84,6 +84,7 @@ class SpacedRepetitionSystem {
             total: 0,
             totalAttempts: 0 // Nombre total de tentatives (avec répétitions)
         };
+        this.isCardRevealed = false; // État de révélation de la carte actuelle
         this.loadProgress();
     }
 
@@ -474,6 +475,8 @@ class VocabApp {
         this.loadVocabularyData();
         this.setupEventListeners();
         this.updateStatsDisplay(); // Charger les statistiques au démarrage
+        this.setupAutoSave(); // Configurer la sauvegarde automatique
+        this.restoreSession(); // Restaurer la session si elle existe
     }
 
     // Initialise les éléments DOM
@@ -1409,6 +1412,9 @@ Partie 5;;;;`;
         // Mettre à jour les statistiques
         this.updateSessionStats();
 
+        // Sauvegarder la session après affichage de la carte
+        this.saveCurrentSession();
+
         // Jouer l'audio automatiquement si le mode est activé
         if (this.autoAudioMode) {
             // Ajouter un petit délai pour que l'affichage soit complet
@@ -1564,6 +1570,10 @@ Partie 5;;;;`;
 
         this.elements.revealBtn.classList.add('hidden');
         this.elements.answerButtons.classList.remove('hidden');
+        
+        // Marquer que la carte est révélée et sauvegarder
+        this.srs.isCardRevealed = true;
+        this.saveCurrentSession();
     }
 
     // Répond à une carte
@@ -1596,6 +1606,9 @@ Partie 5;;;;`;
             this.srs.sessionStats.total++;
             card.countedInTotal = true;
         }
+
+        // Réinitialiser l'état de révélation
+        this.srs.isCardRevealed = false;
 
         // Passer à la carte suivante
         if (this.srs.nextCard()) {
@@ -1748,6 +1761,8 @@ Partie 5;;;;`;
             this.oldWordsList1 = [];
             this.oldWordsList2 = [];
             this.oldWordsList3 = [];
+            // Nettoyer la sauvegarde de session
+            localStorage.removeItem('arabicVocabSession');
             // Mettre à jour les statistiques si elles sont visibles
             if (!this.elements.statsContent.classList.contains('hidden')) {
                 this.updateStatsDisplay();
@@ -1769,6 +1784,250 @@ Partie 5;;;;`;
                 btn.remove();
             }
         });
+    }
+
+    // Configure la sauvegarde automatique
+    setupAutoSave() {
+        // Sauvegarder lors de la fermeture de la page
+        window.addEventListener('beforeunload', () => {
+            this.saveCurrentSession();
+        });
+        
+        // Sauvegarder lors de la perte de focus (changement d'application)
+        window.addEventListener('blur', () => {
+            this.saveCurrentSession();
+        });
+        
+        // Sauvegarder lors de la visibilité cachée (mobile)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.saveCurrentSession();
+            }
+        });
+        
+        // Sauvegarder périodiquement toutes les 30 secondes pendant une session
+        setInterval(() => {
+            if (this.isInSession()) {
+                this.saveCurrentSession();
+            }
+        }, 30000);
+    }
+
+    // Vérifie si on est dans une session active
+    isInSession() {
+        return this.screens.revision.classList.contains('active') || 
+               this.screens.results.classList.contains('active');
+    }
+
+    // Sauvegarde la session actuelle
+    saveCurrentSession() {
+        if (!this.isInSession()) {
+            // Pas de session active, nettoyer la sauvegarde
+            localStorage.removeItem('arabicVocabSession');
+            return;
+        }
+
+        const sessionData = {
+            timestamp: Date.now(),
+            currentScreen: this.getCurrentScreen(),
+            
+            // État de la session
+            currentType: this.currentType,
+            reverseMode: this.reverseMode,
+            autoAudioMode: this.autoAudioMode,
+            
+            // Modes spéciaux
+            isIntensiveReview: this.isIntensiveReview,
+            isOldWordsReview: this.isOldWordsReview,
+            isNumbersReview: this.isNumbersReview,
+            isOldWordsMainSession: this.isOldWordsMainSession,
+            
+            // Données de révision
+            filteredData: this.filteredData,
+            selectedFilters: {
+                parties: Array.from(this.selectedFilters.parties)
+            },
+            customSelectedWords: Array.from(this.customSelectedWords),
+            numbersData: this.numbersData,
+            
+            // Listes des mots anciens
+            oldWordsList1: this.oldWordsList1,
+            oldWordsList2: this.oldWordsList2,
+            oldWordsList3: this.oldWordsList3,
+            
+            // État SRS
+            srsState: {
+                cards: this.srs.cards,
+                remainingCards: this.srs.remainingCards,
+                currentSessionCards: this.srs.currentSessionCards,
+                currentCardIndex: this.srs.currentCardIndex,
+                sessionStats: this.srs.sessionStats,
+                isCardRevealed: this.srs.isCardRevealed
+            },
+            
+            // Interface
+            currentCardData: this.getCurrentCardDisplayData()
+        };
+
+        localStorage.setItem('arabicVocabSession', JSON.stringify(sessionData));
+        console.log('Session sauvegardée automatiquement');
+    }
+
+    // Obtient l'écran actuel
+    getCurrentScreen() {
+        for (const [name, screen] of Object.entries(this.screens)) {
+            if (screen.classList.contains('active')) {
+                return name;
+            }
+        }
+        return 'selection';
+    }
+
+    // Obtient les données d'affichage de la carte actuelle
+    getCurrentCardDisplayData() {
+        if (!this.isInSession()) return null;
+        
+        const arabicText = this.elements.arabicText.textContent;
+        const translationText = this.elements.translationText.textContent;
+        const cardType = this.elements.cardType.textContent;
+        const additionalInfo = this.elements.additionalInfo.textContent;
+        const progressText = this.elements.progressText.textContent;
+        const isRevealed = !this.elements.cardBack.classList.contains('hidden');
+        
+        return {
+            arabicText,
+            translationText,
+            cardType,
+            additionalInfo,
+            progressText,
+            isRevealed
+        };
+    }
+
+    // Restaure une session sauvegardée
+    restoreSession() {
+        const savedSession = localStorage.getItem('arabicVocabSession');
+        if (!savedSession) return;
+
+        try {
+            const sessionData = JSON.parse(savedSession);
+            
+            // Vérifier que la session n'est pas trop ancienne (max 24h)
+            const sessionAge = Date.now() - sessionData.timestamp;
+            const maxAge = 24 * 60 * 60 * 1000; // 24 heures
+            
+            if (sessionAge > maxAge) {
+                localStorage.removeItem('arabicVocabSession');
+                return;
+            }
+
+            // Proposer de restaurer la session
+            const shouldRestore = confirm(
+                'Une session de révision interrompue a été détectée.\n\n' +
+                'Voulez-vous reprendre où vous vous êtes arrêté(e) ?'
+            );
+
+            if (!shouldRestore) {
+                localStorage.removeItem('arabicVocabSession');
+                return;
+            }
+
+            this.doRestoreSession(sessionData);
+        } catch (error) {
+            console.error('Erreur lors de la restauration de session:', error);
+            localStorage.removeItem('arabicVocabSession');
+        }
+    }
+
+    // Effectue la restauration de session
+    doRestoreSession(sessionData) {
+        console.log('Restauration de la session...');
+
+        // Restaurer l'état de base
+        this.currentType = sessionData.currentType;
+        this.reverseMode = sessionData.reverseMode;
+        this.autoAudioMode = sessionData.autoAudioMode;
+        
+        // Restaurer les modes spéciaux
+        this.isIntensiveReview = sessionData.isIntensiveReview;
+        this.isOldWordsReview = sessionData.isOldWordsReview;
+        this.isNumbersReview = sessionData.isNumbersReview;
+        this.isOldWordsMainSession = sessionData.isOldWordsMainSession;
+        
+        // Restaurer les données
+        this.filteredData = sessionData.filteredData || [];
+        this.selectedFilters.parties = new Set(sessionData.selectedFilters?.parties || []);
+        this.customSelectedWords = new Set(sessionData.customSelectedWords || []);
+        this.numbersData = sessionData.numbersData || [];
+        
+        // Restaurer les listes des mots anciens
+        this.oldWordsList1 = sessionData.oldWordsList1 || [];
+        this.oldWordsList2 = sessionData.oldWordsList2 || [];
+        this.oldWordsList3 = sessionData.oldWordsList3 || [];
+        
+        // Restaurer l'état SRS
+        if (sessionData.srsState) {
+            this.srs.cards = sessionData.srsState.cards || [];
+            this.srs.remainingCards = sessionData.srsState.remainingCards || [];
+            this.srs.currentSessionCards = sessionData.srsState.currentSessionCards || [];
+            this.srs.currentCardIndex = sessionData.srsState.currentCardIndex || 0;
+            this.srs.sessionStats = sessionData.srsState.sessionStats || {
+                correct: 0, difficult: 0, incorrect: 0, total: 0, totalAttempts: 0
+            };
+            this.srs.isCardRevealed = sessionData.srsState.isCardRevealed || false;
+        }
+
+        // Restaurer l'interface
+        this.restoreInterface(sessionData);
+        
+        // Afficher l'écran approprié
+        this.showScreen(sessionData.currentScreen || 'revision');
+        
+        console.log('Session restaurée avec succès');
+    }
+
+    // Restaure l'interface utilisateur
+    restoreInterface(sessionData) {
+        // Restaurer les toggles
+        if (this.elements.reverseModeToggle) {
+            this.elements.reverseModeToggle.checked = this.reverseMode;
+        }
+        if (this.elements.autoAudioToggle) {
+            this.elements.autoAudioToggle.checked = this.autoAudioMode;
+        }
+
+        // Restaurer l'affichage de la carte si on est en révision
+        if (sessionData.currentCardData && sessionData.currentScreen === 'revision') {
+            this.restoreCardDisplay(sessionData.currentCardData);
+        }
+
+        // Restaurer les statistiques de session
+        this.updateSessionStats();
+    }
+
+    // Restaure l'affichage de la carte
+    restoreCardDisplay(cardData) {
+        if (!cardData) return;
+
+        this.elements.arabicText.textContent = cardData.arabicText || '';
+        this.elements.translationText.textContent = cardData.translationText || '';
+        this.elements.cardType.textContent = cardData.cardType || '';
+        this.elements.additionalInfo.textContent = cardData.additionalInfo || '';
+        this.elements.progressText.textContent = cardData.progressText || '';
+
+        // Restaurer l'état révélé/caché
+        if (cardData.isRevealed) {
+            this.elements.cardBack.classList.remove('hidden');
+            this.elements.revealBtn.classList.add('hidden');
+            this.elements.answerButtons.classList.remove('hidden');
+        } else {
+            this.elements.cardBack.classList.add('hidden');
+            this.elements.revealBtn.classList.remove('hidden');
+            this.elements.answerButtons.classList.add('hidden');
+        }
+
+        // Mettre à jour la barre de progression
+        this.updateProgressBar();
     }
 
     // Démarre la révision des cartes difficiles
