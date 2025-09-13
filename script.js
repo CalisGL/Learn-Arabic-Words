@@ -736,6 +736,18 @@ Partie 3;;
 أَهْلٌ;أَهْلُونَ;Gens
 ذِكْرٌ;أَذْكَارٌ;Évocation/Rappel
 Partie 4;;
+هَلْ;;Est-ce que
+أَ;;Est-ce que
+مَا / مَاذَا;;Quoi
+لِمَ / لِمَاذَا;;Pourquoi
+مَنْ;;Qui
+كَيْفَ;;Comment
+مَتَى;;Quand
+أَيَّانَ;;Quand
+أَيْنَ;;Où
+أَنَّى;;D'où / Quand / Comment / Où
+أَيُّ;;Qui / Quelle / Quoi
+كَمْ / بِكُمْ;;Combien
 Partie 5;;
 Thématique 4;;
 Partie 1;;
