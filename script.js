@@ -748,6 +748,25 @@ Partie 4;;
 أَنَّى;;D'où / Quand / Comment / Où
 أَيُّ;;Qui / Quelle / Quoi
 كَمْ / بِكُمْ;;Combien
+هَلْ كَتَبْتَ الدَّرْسَ؟;;As tu écris le cours ?
+أَزَيْدٌ فِي الْفَصْلِ؟;;Est-ce que Zaid est dans la classe ?
+مَنِ الْأُسْتَاذُ؟;;Qui est le professeur ?
+كَيْفَ وَجَدْتَنِي؟;;Comment m'as-tu trouvé ?
+مَتَى دَرَسْتَ الْعَرَبِيَّةَ؟;;Quand as-tu étudié l'arabe ?
+أَيَّانَ يَوْمُ سَفَرِكَ؟;;Quand est le jour de ton voyage ?
+أَيْنَ الْجَامِعَةُ؟;;Où est l'université ?
+أَيَّ كِتَابٍ تَقْرَأُ؟;;Quel livre lis-tu ?
+كَمْ طَالِبًا فِي الْفَصْلِ؟;;Combien d'étudiants sont dans la classe ?
+بِكُمْ هَذَا؟;;Combien coûte ceci ?
+عِندِي سُؤَالٌ لَوْ سَمَحْتَ;;J'ai une question si tu le permets
+تَفَضَّلْ;;Je t'en prie !
+طَبْعًا;;Bien sûr
+مَا مَعْنَى ...؟;;Quel est le sens de ... ?
+كَيْفَ نَقُولُ ... بِالْعَرَبِيَّةِ؟;;Comment dit-on ... en arabe ?
+مَا رَأْيَكَ ؟;;Quel est ton avis ?
+لَدَيَّ سُؤَالٌ;;J'ai une question
+أُرِيدُ أَنْ أَسْأَلَكَ لَوْ سَمَحْتَ.;;Je veux te questionner si tu le permets.
+عِنْدِي سُؤَالٌ بِخُصُوصِ ...;;J'ai une question au sujet de ...
 Partie 5;;
 Thématique 4;;
 Partie 1;;
