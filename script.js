@@ -1611,7 +1611,8 @@ Partie 5;;;;`;
                 this.srs.sessionStats.correct++;
             }
             
-            // Marquer la carte comme terminée uniquement si elle est réussie
+            // Marquer la carte comme terminée pour les bonnes réponses
+            // En mode répétition ET en session principale
             if (!card.countedInTotal) {
                 this.srs.sessionStats.total++;
                 card.countedInTotal = true;
@@ -1638,25 +1639,40 @@ Partie 5;;;;`;
     // Met à jour la barre de progression basée sur les bonnes réponses uniquement
     updateProgressBar() {
         const uniqueCardsTotal = this.filteredData.length;
-        const cardsCorrect = this.srs.sessionStats.correct;
-        const progress = uniqueCardsTotal > 0 ? (cardsCorrect / uniqueCardsTotal) * 100 : 0;
+        
+        // En mode répétition, utiliser le nombre de cartes correctes
+        // En mode session principale, utiliser le total de cartes terminées (qui ne s'incrémente que pour les bonnes réponses)
+        let completedCards;
+        if (this.isOldWordsReview && !this.isOldWordsMainSession) {
+            // Mode répétition : progression basée sur les cartes correctes
+            completedCards = this.srs.sessionStats.correct;
+        } else {
+            // Session principale : progression basée sur les cartes terminées (bonnes réponses uniquement)
+            completedCards = this.srs.sessionStats.total;
+        }
+        
+        const progress = uniqueCardsTotal > 0 ? (completedCards / uniqueCardsTotal) * 100 : 0;
         
         this.elements.progressFill.style.width = `${progress}%`;
         
         // Texte différent selon le mode
         if (this.isIntensiveReview) {
-            this.elements.progressText.textContent = `${cardsCorrect} / ${uniqueCardsTotal} cartes difficiles maîtrisées`;
+            this.elements.progressText.textContent = `${completedCards} / ${uniqueCardsTotal} cartes difficiles maîtrisées`;
         } else if (this.isOldWordsReview) {
-            this.elements.progressText.textContent = `${cardsCorrect} / ${uniqueCardsTotal} mots anciens maîtrisés`;
+            if (this.isOldWordsMainSession) {
+                this.elements.progressText.textContent = `${completedCards} / ${uniqueCardsTotal} mots anciens maîtrisés`;
+            } else {
+                this.elements.progressText.textContent = `${completedCards} / ${uniqueCardsTotal} mots ratés maîtrisés`;
+            }
         } else if (this.isNumbersReview) {
-            this.elements.progressText.textContent = `${cardsCorrect} / ${uniqueCardsTotal} chiffres maîtrisés`;
+            this.elements.progressText.textContent = `${completedCards} / ${uniqueCardsTotal} chiffres maîtrisés`;
         } else {
-            this.elements.progressText.textContent = `${cardsCorrect} / ${uniqueCardsTotal} cartes maîtrisées`;
+            this.elements.progressText.textContent = `${completedCards} / ${uniqueCardsTotal} cartes maîtrisées`;
         }
 
         // Afficher aussi le nombre total d'essais si différent
         const totalAttempts = this.srs.sessionStats.totalAttempts;
-        if (totalAttempts > cardsCorrect) {
+        if (totalAttempts > completedCards) {
             this.elements.progressText.textContent += ` (${totalAttempts} essais)`;
         }
     }
