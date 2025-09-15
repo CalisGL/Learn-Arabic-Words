@@ -1417,28 +1417,8 @@ Partie 5;;;;`;
 
         this.updateCurrentCardDisplay();
 
-        // Mettre à jour la progression (basée sur les cartes uniques terminées)
-        const uniqueCardsTotal = this.filteredData.length;
-        const cardsCompleted = this.srs.sessionStats.total;
-        const progress = (cardsCompleted / uniqueCardsTotal) * 100;
-        this.elements.progressFill.style.width = `${progress}%`;
-        
-        // Texte différent selon le mode
-        if (this.isIntensiveReview) {
-            this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} cartes difficiles maîtrisées`;
-        } else if (this.isOldWordsReview) {
-            this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} mots anciens révisés`;
-        } else if (this.isNumbersReview) {
-            this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} chiffres maîtrisés`;
-        } else {
-            this.elements.progressText.textContent = `${cardsCompleted} / ${uniqueCardsTotal} cartes maîtrisées`;
-        }
-
-        // Afficher aussi le nombre total d'essais
-        const totalAttempts = this.srs.sessionStats.totalAttempts;
-        if (totalAttempts > uniqueCardsTotal) {
-            this.elements.progressText.textContent += ` (${totalAttempts} essais)`;
-        }
+        // Mettre à jour la progression
+        this.updateProgressBar();
 
         // Mettre à jour les statistiques
         this.updateSessionStats();
@@ -1626,16 +1606,17 @@ Partie 5;;;;`;
             // Carte difficile : la remettre en fin de pile aussi
             this.srs.addFailedCardToEnd(card);
         } else {
+            // Carte réussie (score >= 2)
             if (!card.needsReview) {
                 this.srs.sessionStats.correct++;
             }
+            
+            // Marquer la carte comme terminée uniquement si elle est réussie
+            if (!card.countedInTotal) {
+                this.srs.sessionStats.total++;
+                card.countedInTotal = true;
+            }
             // Carte réussie : ne pas la remettre
-        }
-
-        // Ne compter chaque carte unique qu'une fois dans le total
-        if (!card.countedInTotal) {
-            this.srs.sessionStats.total++;
-            card.countedInTotal = true;
         }
 
         // Réinitialiser l'état de révélation
@@ -1651,6 +1632,32 @@ Partie 5;;;;`;
         // Mettre à jour les statistiques globales si on est sur l'écran de sélection et que les stats sont visibles
         if (!this.elements.statsContent.classList.contains('hidden')) {
             this.updateStatsDisplay();
+        }
+    }
+
+    // Met à jour la barre de progression basée sur les bonnes réponses uniquement
+    updateProgressBar() {
+        const uniqueCardsTotal = this.filteredData.length;
+        const cardsCorrect = this.srs.sessionStats.correct;
+        const progress = uniqueCardsTotal > 0 ? (cardsCorrect / uniqueCardsTotal) * 100 : 0;
+        
+        this.elements.progressFill.style.width = `${progress}%`;
+        
+        // Texte différent selon le mode
+        if (this.isIntensiveReview) {
+            this.elements.progressText.textContent = `${cardsCorrect} / ${uniqueCardsTotal} cartes difficiles maîtrisées`;
+        } else if (this.isOldWordsReview) {
+            this.elements.progressText.textContent = `${cardsCorrect} / ${uniqueCardsTotal} mots anciens maîtrisés`;
+        } else if (this.isNumbersReview) {
+            this.elements.progressText.textContent = `${cardsCorrect} / ${uniqueCardsTotal} chiffres maîtrisés`;
+        } else {
+            this.elements.progressText.textContent = `${cardsCorrect} / ${uniqueCardsTotal} cartes maîtrisées`;
+        }
+
+        // Afficher aussi le nombre total d'essais si différent
+        const totalAttempts = this.srs.sessionStats.totalAttempts;
+        if (totalAttempts > cardsCorrect) {
+            this.elements.progressText.textContent += ` (${totalAttempts} essais)`;
         }
     }
 
