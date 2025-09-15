@@ -749,7 +749,7 @@ Partie 4;;
 أَيُّ;;Qui / Quelle / Quoi
 كَمْ / بِكُمْ;;Combien
 هَلْ كَتَبْتَ الدَّرْسَ؟;;As tu écris le cours ?
-أَزَيْدٌ فِي الْفَصْلِ؟;;Est-ce que Zaid est dans la classe ?
+أَ زَيْدٌ فِي الْفَصْلِ؟;;Est-ce que Zaid est dans la classe ?
 مَنِ الْأُسْتَاذُ؟;;Qui est le professeur ?
 كَيْفَ وَجَدْتَنِي؟;;Comment m'as-tu trouvé ?
 مَتَى دَرَسْتَ الْعَرَبِيَّةَ؟;;Quand as-tu étudié l'arabe ?
@@ -757,7 +757,7 @@ Partie 4;;
 أَيْنَ الْجَامِعَةُ؟;;Où est l'université ?
 أَيَّ كِتَابٍ تَقْرَأُ؟;;Quel livre lis-tu ?
 كَمْ طَالِبًا فِي الْفَصْلِ؟;;Combien d'étudiants sont dans la classe ?
-بِكُمْ هَذَا؟;;Combien coûte ceci ?
+بِكَمْ هَذَا؟;;Combien coûte ceci ?
 عِندِي سُؤَالٌ لَوْ سَمَحْتَ;;J'ai une question si tu le permets
 تَفَضَّلْ;;Je t'en prie !
 طَبْعًا;;Bien sûr
