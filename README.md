@@ -21,19 +21,11 @@ Une application web moderne pour apprendre le vocabulaire arabe avec le système
 ### 🔊 Audio intégré
 - **Lecture arabe** : Écoutez la prononciation correcte (ResponsiveVoice)
 - **Mode audio automatique** : Lecture automatique à chaque nouvelle carte
-- **Support multivoix** : Voix masculine et féminine arabes
 
 ### 🎯 Interface intuitive
 - **Mode inversé** : Testez-vous dans les deux sens (AR→FR ou FR→AR)
 - **Navigation hiérarchique** : Sélection par niveau > thématique > partie
 - **Design responsive** : Fonctionne sur tous les appareils
-
-## 📊 Système de notation
-
-- **❌ Incorrect (0 points)** : Vous ne connaissez pas du tout
-- **😰 Difficile (1 point)** : Vous connaissez mais avec difficulté
-- **✅ Correct (2 points)** : Vous connaissez bien
-- **🚀 Facile (3 points)** : Vous maîtrisez parfaitement
 
 ## 🛠️ Installation
 
@@ -107,11 +99,6 @@ Vous pouvez réinitialiser toutes vos statistiques depuis l'interface.
 
 ## 🔧 Fonctionnalités avancées
 
-### Raccourcis clavier
-- **Espace** : Révéler la réponse
-- **1-4** : Noter la carte (1=Incorrect, 4=Facile)
-- **Échap** : Retour à la sélection
-
 ### Modes d'affichage
 - **Mode normal** : Arabe → Français
 - **Mode inversé** : Français → Arabe
@@ -160,14 +147,6 @@ L'application utilise un système adaptatif basé sur vos performances :
 - **Honnêteté** : Notez-vous correctement pour un apprentissage optimal
 - **Patience** : Les mots difficiles reviendront naturellement
 - **Contexte** : Essayez d'utiliser les mots appris dans des phrases
-
-## 📞 Contact et contribution
-
-Ce projet est open source. N'hésitez pas à :
-- Signaler des bugs
-- Proposer des améliorations
-- Contribuer du nouveau vocabulaire
-- Partager vos retours d'expérience
 
 ---
 
