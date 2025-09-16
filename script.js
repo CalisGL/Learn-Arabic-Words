@@ -727,7 +727,7 @@ Partie 2;;
 كَبِيرٌ;;Grand
 هُنَاكَ;;Là bas
 بَعْضٌ;;Quelques / Certains
-مَرَكِزٌ;مَرَاكِزُ;Centre
+مَرْكَزٌ;مَرَاكِزُ;Centre
 الَّذِي;;Celui qui
 مَسْجِدٌ;مَسَاجِدُ;Mosquée
 خَلْفَ;;Derrière
@@ -770,6 +770,20 @@ Partie 4;;
 Partie 5;;
 Thématique 4;;
 Partie 1;;
+آدَابٌ;أَدَبٌ;Politesse / Comportement
+بَيْنَمَا;;Pendant que / Tandis que
+جُلُوسٌ;;Assise / Le fait de s'asseoir
+غَدَاءٌ;;Déjeuner
+حَوْلَ;;Autour de
+طَاوِلَةٌ;طَاوِلَاتٌ;Table
+فُرْصَةٌ;فُرَصٌ;Occasion
+صَبَاحًا;;Matin
+طَرِيقٌ;طُرُقٌ;Route / Voie / Chemin
+مُبْتَدِئٌ;مُبْتَدِئُونَ;Débutant
+تَطْبِيقٌ;;Application
+سَهْلَةٌ;;Facile
+سُرْعَةٌ;;Vitesse
+إِذَا;;Si
 Partie 2;;
 Partie 3;;
 Partie 4;;
@@ -908,6 +922,13 @@ Partie 4;;;;
 Partie 5;;;;
 Thématique 4;;;;
 Partie 1;;;;
+أَحْضَرَ;يُحْضِرُ;أَحْضِرْ;إِحْضَارًا;Apporter
+طَبَخَ;يَطْبُخُ;أَطْبُخُ;طَبْحًا;Cuisiner
+أَخَذَ;يَأْخُذُ;خُذْ;أَخْذَا;Prendre / Saisir
+اسْتَعْمَلَ;يَسْتَعْمِلُ;اسْتَعْمِلْ;اسْتِعْمَالًا;Utiliser
+عَلَّمَ;يُعَلِّمُ;عَلِّمْ;تَعْلِيمًا;Enseigner
+أَمْكَنَ;يُمْكِنُ;أَمْكِنْ;إِمْكَانًا;Pouvoir
+اجْتَهَدَ;يَجْتَهِدُ;اجْتَهِدْ;اجْتِهَادًا;S'efforcer
 Partie 2;;;;
 Partie 3;;;;
 Partie 4;;;;
