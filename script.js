@@ -785,6 +785,29 @@ Partie 1;;
 سُرْعَةٌ;;Vitesse
 إِذَا;;Si
 Partie 2;;
+مَعْذِرَةً;;Désolé
+تَأْخِيرُ;;Retard
+جَوْعَانُ;جِيَاعٌ;Affamé
+طَبَّاخٌ;طَبَّاخُونَ;Cuisinier
+يَوْمٌ;أَيَّامٌ;Jour
+مَاهِرٌ;مَاهِرُونَ;Habile
+طَعَامٌ;أَطْعِمَةٌ;Nourriture / Plat
+طَاجِنٌ;طَوَاجِنُ;Tajine
+دَجَاجَةٌ;دَجَاجٌ;Poulet
+زَيْتُونَةٌ;زَيْتُونٌ;Olive
+لَذِيذٌ;;Délicieux
+خُبْزَةٌ;خُبْزٌ;Pain
+هَناءٌ;;Bonheur
+شِفَاءٌ;;Guérison
+سَلَطَةٌ;سَلَطَاتٌ;Salade
+رَأْيٌ;آرَاءٌ;Opinion / Avis
+وَاسِعَةٌ;;Spacieuse
+نَظِيفَةٌ;;Propre
+حَرِيصٌ;حَرِيصُونَ;Soucieux
+نَظَافَةٌ;;Propreté
+قَلِيلٌ;;Peu
+عَصِيرٌ;عَصَائِرُ;Jus
+جَاهِزٌ;;Prêt
 Partie 3;;
 Partie 4;;
 Partie 5;;
