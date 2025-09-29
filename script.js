@@ -1,7 +1,7 @@
-// Classe pour convertir les chiffres occidentaux en chiffres arabes
+
 class ArabicNumbers {
     constructor() {
-        // Mapping des chiffres occidentaux vers les chiffres arabes
+        
         this.arabicDigits = {
             '0': '٠',
             '1': '١',
@@ -16,12 +16,12 @@ class ArabicNumbers {
         };
     }
 
-    // Convertit un nombre occidental en chiffres arabes
+    
     toArabic(number) {
         return number.toString().split('').map(digit => this.arabicDigits[digit] || digit).join('');
     }
 
-    // Génère un nombre aléatoire selon la difficulté
+    
     generateRandomNumber(difficulty) {
         let min, max;
         
@@ -50,7 +50,7 @@ class ArabicNumbers {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Génère un ensemble de nombres pour l'entraînement
+    
     generateNumberSet(difficulty, count) {
         const numbers = [];
         const usedNumbers = new Set();
@@ -70,36 +70,36 @@ class ArabicNumbers {
     }
 }
 
-// Classe pour gérer le système de révision avec répétition espacée
+
 class SpacedRepetitionSystem {
     constructor() {
         this.cards = [];
         this.currentCardIndex = 0;
-        this.currentSessionCards = []; // Cartes de la vague actuelle
-        this.remainingCards = []; // Cartes qui doivent être redemandées
+        this.currentSessionCards = []; 
+        this.remainingCards = []; 
         this.sessionStats = {
             correct: 0,
             difficult: 0,
             incorrect: 0,
             total: 0,
-            totalAttempts: 0 // Nombre total de tentatives (avec répétitions)
+            totalAttempts: 0 
         };
-        this.isCardRevealed = false; // État de révélation de la carte actuelle
+        this.isCardRevealed = false; 
         this.loadProgress();
     }
 
-    // Charge les données de progression depuis le localStorage
+    
     loadProgress() {
         const saved = localStorage.getItem('arabicVocabProgress');
         this.progress = saved ? JSON.parse(saved) : {};
     }
 
-    // Sauvegarde la progression
+    
     saveProgress() {
         localStorage.setItem('arabicVocabProgress', JSON.stringify(this.progress));
     }
 
-    // Ajoute une carte au système
+    
     addCard(card) {
         const cardId = this.generateCardId(card);
         if (!this.progress[cardId]) {
@@ -119,12 +119,12 @@ class SpacedRepetitionSystem {
         this.cards.push(card);
     }
 
-    // Génère un ID unique pour une carte
+    
     generateCardId(card) {
         return `${card.type}_${card.niveau}_${card.thematique}_${card.partie}_${card.arabic}`;
     }
 
-    // Trie les cartes selon l'algorithme de répétition espacée
+    
     sortCards() {
         this.cards.sort((a, b) => {
             const now = Date.now();
@@ -134,65 +134,65 @@ class SpacedRepetitionSystem {
             if (aReady && !bReady) return -1;
             if (!aReady && bReady) return 1;
             
-            // Priorise les cartes avec plus d'échecs
+            
             const aFailureRate = a.progress.attempts > 0 ? a.progress.failures / a.progress.attempts : 0;
             const bFailureRate = b.progress.attempts > 0 ? b.progress.failures / b.progress.attempts : 0;
             
             if (aFailureRate !== bFailureRate) return bFailureRate - aFailureRate;
             
-            // Ensuite par temps de révision
+            
             return a.progress.nextReview - b.progress.nextReview;
         });
     }
 
-    // Met à jour la progression d'une carte
+    
     updateCardProgress(cardId, score) {
         const progress = this.progress[cardId];
         progress.attempts++;
         progress.lastReview = Date.now();
 
-        // Score: 0=incorrect, 1=difficult, 2=correct, 3=easy
+        
         if (score >= 2) {
             progress.successes++;
             
-            if (score === 3) { // Facile
+            if (score === 3) { 
                 progress.difficulty = Math.max(1.3, progress.difficulty - 0.15);
                 progress.interval = Math.ceil(progress.interval * 2.5);
-            } else { // Correct
+            } else { 
                 progress.difficulty = Math.max(1.3, progress.difficulty - 0.1);
                 progress.interval = Math.ceil(progress.interval * progress.difficulty);
             }
         } else {
             progress.failures++;
             
-            if (score === 0) { // Incorrect
+            if (score === 0) { 
                 progress.difficulty = Math.min(2.5, progress.difficulty + 0.2);
                 progress.interval = 1;
-            } else { // Difficult
+            } else { 
                 progress.difficulty = Math.min(2.5, progress.difficulty + 0.15);
                 progress.interval = Math.max(1, Math.ceil(progress.interval * 0.6));
             }
         }
 
-        // Calcule la prochaine révision (en millisecondes)
+        
         const dayInMs = 24 * 60 * 60 * 1000;
         progress.nextReview = Date.now() + (progress.interval * dayInMs);
 
         this.saveProgress();
     }
 
-    // Obtient la carte actuelle
+    
     getCurrentCard() {
         return this.getNextSessionCard();
     }
 
-    // Passe à la carte suivante
+    
     nextCard() {
         this.currentCardIndex++;
         return !this.isSessionComplete();
     }
 
-    // Remet à zéro la session
+    
     resetSession() {
         this.currentCardIndex = 0;
         this.currentSessionCards = [];
@@ -205,19 +205,19 @@ class SpacedRepetitionSystem {
             totalAttempts: 0
         };
         
-        // Réinitialiser toutes les propriétés des cartes de la session
+        
         this.cards.forEach(card => {
             delete card.needsReview;
             delete card.countedInTotal;
         });
         
-        // Initialiser la session avec un ordre aléatoire
+        
         this.initializeRandomSession();
     }
 
-    // Mélange aléatoirement un tableau (algorithme Fisher-Yates)
+    
     shuffleArray(array) {
-        const shuffled = [...array]; // Créer une copie pour ne pas modifier l'original
+        const shuffled = [...array]; 
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -225,7 +225,7 @@ class SpacedRepetitionSystem {
         return shuffled;
     }
 
-    // Mélange aléatoirement les cartes
+    
     shuffleCards() {
         for (let i = this.cards.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -233,37 +233,37 @@ class SpacedRepetitionSystem {
         }
     }
 
-    // Initialise une session avec un ordre complètement aléatoire
+    
     initializeRandomSession() {
-        // Mélanger complètement les cartes
+        
         this.shuffleCards();
-        // Initialiser les cartes restantes à réviser
+        
         this.remainingCards = [...this.cards];
         this.currentSessionCards = [];
     }
 
-    // Ajoute une carte ratée à la fin de la session
+    
     addFailedCardToEnd(card) {
-        // Marquer la carte comme à revoir
+        
         card.needsReview = true;
-        // L'ajouter à la fin des cartes restantes
+        
         this.remainingCards.push(card);
     }
 
-    // Obtient la prochaine carte de la session
+    
     getNextSessionCard() {
         if (this.currentCardIndex < this.currentSessionCards.length) {
             return this.currentSessionCards[this.currentCardIndex];
         }
         
-        // Si on a fini les cartes actuelles, préparer la prochaine vague
+        
         if (this.remainingCards.length > 0) {
-            // Prendre toutes les cartes restantes pour cette vague
+            
             this.currentSessionCards = [...this.remainingCards];
             this.remainingCards = [];
             this.currentCardIndex = 0;
             
-            // Mélanger cette nouvelle vague
+            
             for (let i = this.currentSessionCards.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [this.currentSessionCards[i], this.currentSessionCards[j]] = 
@@ -273,28 +273,28 @@ class SpacedRepetitionSystem {
             return this.currentSessionCards[this.currentCardIndex];
         }
         
-        return null; // Session terminée
+        return null; 
     }
 
-    // Vérifie si la session est terminée
+    
     isSessionComplete() {
         return this.currentCardIndex >= this.currentSessionCards.length && 
                this.remainingCards.length === 0;
     }
 
-    // Obtient les cartes avec le plus haut taux d'échec pour la révision intensive
+    
     getDifficultCards(cards, maxCards = 20) {
-        // Filtre les cartes qui sont considérées comme difficiles (même critère que les statistiques)
+        
         const difficultCards = cards.filter(card => {
-            // Les cartes reçues ont déjà leurs données de progression attachées
+            
             const progress = card.progress;
             if (!progress || progress.attempts === 0) return false;
             
             const failureRate = progress.failures / progress.attempts;
-            return failureRate > 0.5; // Plus de 50% d'échec
+            return failureRate > 0.5; 
         });
 
-        // Trie par taux d'échec décroissant
+        
         difficultCards.sort((a, b) => {
             const aProgress = a.progress;
             const bProgress = b.progress;
@@ -302,7 +302,7 @@ class SpacedRepetitionSystem {
             const aFailureRate = aProgress.attempts > 0 ? aProgress.failures / aProgress.attempts : 0;
             const bFailureRate = bProgress.attempts > 0 ? bProgress.failures / bProgress.attempts : 0;
             
-            // Si même taux d'échec, priorise les cartes avec plus d'échecs absolus
+            
             if (Math.abs(aFailureRate - bFailureRate) < 0.01) {
                 return bProgress.failures - aProgress.failures;
             }
@@ -310,17 +310,17 @@ class SpacedRepetitionSystem {
             return bFailureRate - aFailureRate;
         });
 
-        // Retourne au maximum maxCards cartes
+        
         return difficultCards.slice(0, maxCards);
     }
 
-    // Initialise une session de révision intensive avec les cartes difficiles
+    
     initializeDifficultCardsSession(allCards) {
         const difficultCards = this.getDifficultCards(allCards);
         
         if (difficultCards.length === 0) {
-            // Aucune carte difficile trouvée selon le critère strict (>50% échec)
-            // Ne pas faire de fallback, retourner 0 pour indiquer qu'il n'y a pas de cartes difficiles
+            
+            
             this.remainingCards = [];
             this.currentSessionCards = [];
             this.currentCardIndex = 0;
@@ -332,48 +332,48 @@ class SpacedRepetitionSystem {
         this.currentSessionCards = [];
         this.currentCardIndex = 0;
         
-        // Mélanger les cartes difficiles
+        
         this.shuffleArray(this.remainingCards);
         
         return this.remainingCards.length;
     }
 
-    // Obtient les cartes non révisées depuis plus de 3 jours
+    
     getOldCards(cards, maxCards = 50) {
-        const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000); // 3 jours en millisecondes
+        const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000); 
         
-        // Filtre les cartes qui n'ont pas été révisées depuis plus de 3 jours
+        
         const oldCards = cards.filter(card => {
             const progress = card.progress;
             if (!progress || progress.attempts === 0) return false;
             
-            // Carte considérée comme "ancienne" si dernière révision > 3 jours
+            
             return progress.lastReview && progress.lastReview < threeDaysAgo;
         });
 
-        // Trie par ancienneté décroissante (les plus anciennes en premier)
+        
         oldCards.sort((a, b) => {
             const aLastReview = a.progress.lastReview || 0;
             const bLastReview = b.progress.lastReview || 0;
             
-            // Si même ancienneté, priorise par nombre de tentatives (pour réviser les mots connus)
-            if (Math.abs(aLastReview - bLastReview) < (24 * 60 * 60 * 1000)) { // Même jour
+            
+            if (Math.abs(aLastReview - bLastReview) < (24 * 60 * 60 * 1000)) { 
                 return b.progress.attempts - a.progress.attempts;
             }
             
-            return aLastReview - bLastReview; // Plus ancien en premier
+            return aLastReview - bLastReview; 
         });
 
-        // Retourne au maximum maxCards cartes
+        
         return oldCards.slice(0, maxCards);
     }
 
-    // Initialise une session de révision des mots anciens
+    
     initializeOldCardsSession(allCards) {
         const oldCards = this.getOldCards(allCards);
         
         if (oldCards.length === 0) {
-            // Aucune carte ancienne trouvée
+            
             this.remainingCards = [];
             this.currentSessionCards = [];
             this.currentCardIndex = 0;
@@ -385,23 +385,23 @@ class SpacedRepetitionSystem {
         this.currentSessionCards = [];
         this.currentCardIndex = 0;
         
-        // Mélanger les cartes anciennes
+        
         this.shuffleArray(this.remainingCards);
         
         return this.remainingCards.length;
     }
 
-    // ==========================================
-    // Méthodes pour les chiffres arabes
-    // ==========================================
+    
+    
+    
 
-    // Convertit un nombre en chiffres arabes
+    
     convertToArabicNumerals(number) {
         const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
         return number.toString().split('').map(digit => arabicNumerals[parseInt(digit)]).join('');
     }
 
-    // Génère un nombre aléatoire selon la difficulté
+    
     generateRandomNumber(difficulty) {
         let min, max;
         switch(difficulty) {
@@ -414,7 +414,7 @@ class SpacedRepetitionSystem {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Génère les cartes de chiffres selon la configuration
+    
     generateNumberCards(difficulty, count) {
         const cards = [];
         const usedNumbers = new Set();
@@ -443,7 +443,7 @@ class SpacedRepetitionSystem {
     }
 }
 
-// Classe principale de l'application
+
 class VocabApp {
     constructor() {
         this.srs = new SpacedRepetitionSystem();
@@ -455,31 +455,31 @@ class VocabApp {
         };
         this.filteredData = [];
         this.selectedFilters = {
-            parties: new Set() // Format: "niveau|thematique|partie"
+            parties: new Set() 
         };
         this.reverseMode = false;
-        this.isIntensiveReview = false; // Initialiser le mode révision intensive
-        this.isOldWordsReview = false; // Initialiser le mode révision des mots anciens
-        this.isNumbersReview = false; // Initialiser le mode révision des chiffres
-        this.isOldWordsMainSession = false; // Distinguer session principale vs répétition
-        this.customSelectedWords = new Set(); // Mots sélectionnés pour la révision personnalisée
-        this.autoAudioMode = false; // Mode audio automatique
-        this.numbersData = []; // Données des chiffres pour l'entraînement
+        this.isIntensiveReview = false; 
+        this.isOldWordsReview = false; 
+        this.isNumbersReview = false; 
+        this.isOldWordsMainSession = false; 
+        this.customSelectedWords = new Set(); 
+        this.autoAudioMode = false; 
+        this.numbersData = []; 
         
-        // Listes pour la gestion des mots anciens
-        this.oldWordsList1 = []; // Tous les mots anciens disponibles
-        this.oldWordsList2 = []; // 7 mots sélectionnés pour la session courante
-        this.oldWordsList3 = []; // Mots ratés à répéter
+        
+        this.oldWordsList1 = []; 
+        this.oldWordsList2 = []; 
+        this.oldWordsList3 = []; 
 
         this.initializeElements();
         this.loadVocabularyData();
         this.setupEventListeners();
-        this.updateStatsDisplay(); // Charger les statistiques au démarrage
-        this.setupAutoSave(); // Configurer la sauvegarde automatique
-        this.restoreSession(); // Restaurer la session si elle existe
+        this.updateStatsDisplay(); 
+        this.setupAutoSave(); 
+        this.restoreSession(); 
     }
 
-    // Initialise les éléments DOM
+    
     initializeElements() {
         this.screens = {
             selection: document.getElementById('selection-screen'),
@@ -514,7 +514,7 @@ class VocabApp {
             finalCorrect: document.getElementById('final-correct'),
             finalTotal: document.getElementById('final-total'),
             finalScore: document.getElementById('final-score'),
-            // Éléments des statistiques
+            
             toggleStatsBtn: document.getElementById('toggle-stats-btn'),
             statsContent: document.getElementById('stats-content'),
             resetStatsBtn: document.getElementById('reset-stats-btn'),
@@ -524,7 +524,7 @@ class VocabApp {
             successRate: document.getElementById('success-rate'),
             difficultCards: document.getElementById('difficult-cards'),
             masteredCards: document.getElementById('mastered-cards'),
-            // Éléments de la sélection personnalisée
+            
             customSelection: document.getElementById('custom-selection'),
             customTypeSelect: document.getElementById('custom-type-select'),
             customThemeContainer: document.getElementById('custom-theme-container'),
@@ -533,10 +533,10 @@ class VocabApp {
             customWordsGrid: document.getElementById('custom-words-grid'),
             customSelectionCount: document.getElementById('custom-selection-count'),
             startCustomBtn: document.getElementById('start-custom-btn'),
-            // Éléments audio
+            
             arabicAudioBtn: document.getElementById('arabic-audio-btn'),
             autoAudioToggle: document.getElementById('auto-audio-mode'),
-            // Éléments des chiffres
+            
             numbersSelection: document.getElementById('numbers-selection'),
             numbersDifficulty: document.getElementById('numbers-difficulty'),
             numbersCount: document.getElementById('numbers-count'),
@@ -546,10 +546,10 @@ class VocabApp {
         };
     }
 
-    // Charge les données de vocabulaire depuis les CSV intégrés
+    
     async loadVocabularyData() {
         try {
-            // Données des mots intégrées directement
+            
             const motsText = `Niveau 1;;
 Thématique 1;;
 Partie 1;;
@@ -880,7 +880,7 @@ Partie 3;;
 Partie 4;;
 Partie 5;;`;
 
-            // Données des verbes intégrées directement
+            
             const verbesText = `Niveau 1;;;;
 Thématique 1;;;;
 Partie 1;;;;
@@ -946,9 +946,9 @@ Partie 5;;;;
 Thématique 4;;;;
 Partie 1;;;;
 أَحْضَرَ;يُحْضِرُ;أَحْضِرْ;إِحْضَارًا;Apporter
-طَبَخَ;يَطْبُخُ;اُطْبُخ;طَبْخًا;Cuisiner
+طَبَخَ;يَطْبُخُ;اُطْبُخْ;طَبْخًا;Cuisiner
 أَخَذَ;يَأْخُذُ;خُذْ;أَخْذًا;Prendre / Saisir
-اسْتَعْمَلَ;يَسْتَعْمِلُ;اسْتَعْمِلْ;اسْتِعْمَالًا;Utiliser
+اِسْتَعْمَلَ;يَسْتَعْمِلُ;اِسْتَعْمِلْ;اِسْتِعْمَالًا;Utiliser
 عَلَّمَ;يُعَلِّمُ;عَلِّمْ;تَعْلِيمًا;Enseigner
 أَمْكَنَ;يُمْكِنُ;أَمْكِنْ;إِمْكَانًا;Pouvoir
 اِجْتَهَدَ;يَجْتَهِدُ;اِجْتَهِدْ;اِجْتِهَادًا;S'efforcer
@@ -1034,7 +1034,7 @@ Partie 5;;;;`;
         }
     }
 
-    // Parse le contenu CSV
+    
     parseCSV(csvText, type) {
         const lines = csvText.split('\n').filter(line => line.trim());
         const data = [];
@@ -1060,7 +1060,7 @@ Partie 5;;;;`;
                 continue;
             }
 
-            // Données de vocabulaire
+            
             if (columns.length >= 3 && columns[0].trim() && currentNiveau && currentThematique && currentPartie) {
                 const item = {
                     type: type,
@@ -1074,7 +1074,7 @@ Partie 5;;;;`;
                     item.plural = columns[1].trim();
                     item.translation = columns[2].trim();
                 } else if (type === 'verbes') {
-                    item.arabic = columns[0].trim(); // Passé
+                    item.arabic = columns[0].trim(); 
                     item.present = columns[1].trim();
                     item.imperative = columns[2].trim();
                     item.masdar = columns[3].trim();
@@ -1088,30 +1088,30 @@ Partie 5;;;;`;
         return data;
     }
 
-    // Configure les écouteurs d'événements
+    
     setupEventListeners() {
-        // Sélection du type
+        
         this.elements.typeButtons.forEach(btn => {
             btn.addEventListener('click', () => this.selectType(btn.dataset.type));
         });
 
-        // Filtres - plus d'événements nécessaires car tout sera dynamique
         
-        // Mode inversé
+        
+        
         this.elements.reverseModeToggle.addEventListener('change', () => {
             this.reverseMode = this.elements.reverseModeToggle.checked;
-            // Si on est en cours de révision, mettre à jour la carte actuelle
+            
             if (this.screens.revision.classList.contains('active') && this.srs.getCurrentCard()) {
                 this.updateCurrentCardDisplay();
             }
         });
 
-        // Mode audio automatique
+        
         this.elements.autoAudioToggle.addEventListener('change', () => {
             this.autoAudioMode = this.elements.autoAudioToggle.checked;
         });
 
-        // Boutons de contrôle
+        
         this.elements.startBtn.addEventListener('click', () => this.startRevision());
         this.elements.revealBtn.addEventListener('click', () => this.revealAnswer());
         this.elements.backBtn.addEventListener('click', () => this.showScreen('selection'));
@@ -1119,96 +1119,96 @@ Partie 5;;;;`;
         this.elements.newSelectionBtn.addEventListener('click', () => this.showScreen('selection'));
         this.elements.reviewDifficultBtn.addEventListener('click', () => this.startDifficultCardsReviewFromResults());
 
-        // Statistiques
+        
         this.elements.toggleStatsBtn.addEventListener('click', () => this.toggleStats());
         this.elements.resetStatsBtn.addEventListener('click', () => this.resetStats());
 
-        // Sélection personnalisée
+        
         this.elements.customTypeSelect.addEventListener('change', () => this.handleCustomTypeChange());
         this.elements.customThemeSelect.addEventListener('change', () => this.handleCustomThemeChange());
         this.elements.startCustomBtn.addEventListener('click', () => this.startCustomRevision());
 
-        // Boutons audio
+        
         this.elements.arabicAudioBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Empêcher la propagation vers la carte
+            e.stopPropagation(); 
             this.playArabicAudio();
         });
 
-        // Boutons de réponse
+        
         this.elements.answerButtons.addEventListener('click', (e) => {
             if (e.target.classList.contains('answer-btn')) {
                 this.answerCard(parseInt(e.target.dataset.score));
             }
         });
 
-        // Clic sur la carte pour révéler
+        
         this.elements.flashcard.addEventListener('click', () => {
             if (!this.elements.revealBtn.classList.contains('hidden')) {
                 this.revealAnswer();
             }
         });
 
-        // Événements pour l'entraînement aux chiffres
+        
         this.elements.numbersDifficulty.addEventListener('change', () => this.updateNumbersPreview());
         this.elements.numbersCount.addEventListener('change', () => this.updateNumbersPreview());
         this.elements.startNumbersBtn.addEventListener('click', () => this.startNumbersReview());
     }
 
-    // Sélectionne le type de vocabulaire
+    
     selectType(type) {
         this.currentType = type;
         
-        // Réinitialiser les modes de révision
+        
         this.isIntensiveReview = false;
         this.isOldWordsReview = false;
         this.isNumbersReview = false;
         
-        // Met à jour les boutons
+        
         this.elements.typeButtons.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.type === type);
         });
 
-        // Masquer tous les types de sélection
+        
         this.elements.filters.classList.add('hidden');
         this.elements.customSelection.classList.add('hidden');
         this.elements.numbersSelection.classList.add('hidden');
 
-        // Si c'est le mode révision intensive
+        
         if (type === 'revision') {
             this.startDifficultCardsReview();
             return;
         }
 
-        // Si c'est le mode révision des mots anciens
+        
         if (type === 'old-words') {
             this.startOldWordsReview();
             return;
         }
 
-        // Si c'est le mode révision personnalisée
+        
         if (type === 'custom') {
             this.elements.customSelection.classList.remove('hidden');
             this.initializeCustomSelection();
             return;
         }
 
-        // Si c'est le mode révision des chiffres
+        
         if (type === 'numbers') {
             this.elements.numbersSelection.classList.remove('hidden');
             this.updateNumbersPreview();
             return;
         }
 
-        // Mode normal : affiche les filtres et les remplit
+        
         this.elements.filters.classList.remove('hidden');
         this.populateFilters();
     }
 
-    // Remplit les filtres selon le type sélectionné avec interface hiérarchique
+    
     populateFilters() {
         const data = this.vocabularyData[this.currentType];
         
-        // Organiser les données par niveau > thématique > partie
+        
         const hierarchy = {};
         
         data.forEach(item => {
@@ -1221,40 +1221,40 @@ Partie 5;;;;`;
             hierarchy[item.niveau][item.thematique].add(item.partie);
         });
 
-        // Créer l'interface hiérarchique
+        
         this.createHierarchicalInterface(hierarchy);
 
-        // Réinitialiser les sélections
+        
         this.selectedFilters.parties.clear();
         this.updateSelectionSummary();
     }
 
-    // Crée l'interface hiérarchique
+    
     createHierarchicalInterface(hierarchy) {
         const container = this.elements.hierarchicalSelection;
         container.innerHTML = '';
 
-        // Bouton pour tout développer/réduire
+        
         const expandBtn = document.createElement('button');
         expandBtn.className = 'expand-all-btn';
         expandBtn.textContent = '📂 Tout développer';
         expandBtn.onclick = () => this.toggleAllSections(expandBtn);
         container.appendChild(expandBtn);
 
-        // Créer les sections par niveau
+        
         Object.keys(hierarchy).sort().forEach(niveau => {
             const niveauSection = this.createNiveauSection(niveau, hierarchy[niveau]);
             container.appendChild(niveauSection);
         });
     }
 
-    // Crée une section de niveau
+    
     createNiveauSection(niveau, thematiques) {
         const section = document.createElement('div');
         section.className = 'niveau-section';
         section.dataset.niveau = niveau;
 
-        // En-tête du niveau
+        
         const header = document.createElement('div');
         header.className = 'niveau-header';
         header.onclick = () => this.toggleNiveauSection(section);
@@ -1270,11 +1270,11 @@ Partie 5;;;;`;
         header.appendChild(title);
         header.appendChild(arrow);
 
-        // Contenu du niveau
+        
         const content = document.createElement('div');
         content.className = 'niveau-content';
 
-        // Créer les sections thématiques
+        
         Object.keys(thematiques).sort().forEach(thematique => {
             const thematiqueSection = this.createThematiqueSection(niveau, thematique, thematiques[thematique]);
             content.appendChild(thematiqueSection);
@@ -1286,13 +1286,13 @@ Partie 5;;;;`;
         return section;
     }
 
-    // Crée une section de thématique
+    
     createThematiqueSection(niveau, thematique, parties) {
         const section = document.createElement('div');
         section.className = 'thematique-section';
         section.dataset.thematique = thematique;
 
-        // En-tête de la thématique
+        
         const header = document.createElement('div');
         header.className = 'thematique-header';
         header.onclick = () => this.toggleThematiqueSection(section);
@@ -1308,14 +1308,14 @@ Partie 5;;;;`;
         header.appendChild(title);
         header.appendChild(arrow);
 
-        // Contenu de la thématique (cases à cocher des parties)
+        
         const content = document.createElement('div');
         content.className = 'thematique-content';
 
         const partiesGrid = document.createElement('div');
         partiesGrid.className = 'parties-grid';
 
-        // Créer les cases à cocher pour les parties
+        
         Array.from(parties).sort().forEach(partie => {
             const checkbox = this.createPartieCheckbox(niveau, thematique, partie);
             partiesGrid.appendChild(checkbox);
@@ -1328,7 +1328,7 @@ Partie 5;;;;`;
         return section;
     }
 
-    // Crée une case à cocher pour une partie
+    
     createPartieCheckbox(niveau, thematique, partie) {
         const label = document.createElement('label');
         label.className = 'partie-checkbox';
@@ -1350,7 +1350,7 @@ Partie 5;;;;`;
         return label;
     }
 
-    // Gère le changement d'une case partie
+    
     handlePartieChange(partieKey, checked) {
         if (checked) {
             this.selectedFilters.parties.add(partieKey);
@@ -1360,33 +1360,33 @@ Partie 5;;;;`;
         this.updateSelectionSummary();
     }
 
-    // Bascule l'état d'une section niveau
+    
     toggleNiveauSection(section) {
         section.classList.toggle('expanded');
     }
 
-    // Bascule l'état d'une section thématique
+    
     toggleThematiqueSection(section) {
         section.classList.toggle('expanded');
     }
 
-    // Bascule toutes les sections
+    
     toggleAllSections(button) {
         const allSections = this.elements.hierarchicalSelection.querySelectorAll('.niveau-section, .thematique-section');
         const expandedSections = this.elements.hierarchicalSelection.querySelectorAll('.niveau-section.expanded, .thematique-section.expanded');
         
         if (expandedSections.length === 0) {
-            // Tout développer
+            
             allSections.forEach(section => section.classList.add('expanded'));
             button.textContent = '📁 Tout réduire';
         } else {
-            // Tout réduire
+            
             allSections.forEach(section => section.classList.remove('expanded'));
             button.textContent = '📂 Tout développer';
         }
     }
 
-    // Met à jour le résumé de sélection
+    
     updateSelectionSummary() {
         const totalSelected = this.selectedFilters.parties.size;
         
@@ -1394,7 +1394,7 @@ Partie 5;;;;`;
             this.elements.selectionCount.textContent = 'Aucune sélection';
             this.elements.startBtn.disabled = true;
         } else {
-            // Analyser les sélections
+            
             const niveaux = new Set();
             const thematiques = new Set();
             
@@ -1418,12 +1418,12 @@ Partie 5;;;;`;
         }
     }
 
-    // Démarre la révision
+    
     startRevision() {
-        // Réinitialiser le mode révision intensive
+        
         this.isIntensiveReview = false;
         
-        // Filtrer les données selon les parties sélectionnées
+        
         this.filteredData = this.vocabularyData[this.currentType].filter(item => {
             const partieKey = `${item.niveau}|${item.thematique}|${item.partie}`;
             return this.selectedFilters.parties.has(partieKey);
@@ -1434,18 +1434,18 @@ Partie 5;;;;`;
             return;
         }
 
-        // Initialiser le système de révision
+        
         this.srs.cards = [];
         this.filteredData.forEach(item => this.srs.addCard(item));
         
-        // Démarrer une session avec ordre aléatoire et répétition des cartes ratées
+        
         this.srs.resetSession();
 
         this.showScreen('revision');
         this.showNextCard();
     }
 
-    // Affiche la carte suivante
+    
     showNextCard() {
         const card = this.srs.getCurrentCard();
         if (!card) {
@@ -1453,7 +1453,7 @@ Partie 5;;;;`;
             return;
         }
 
-        // Masquer la réponse
+        
         document.querySelector('.card-front').style.display = 'block';
         document.querySelector('.card-back').classList.add('hidden');
         this.elements.revealBtn.classList.remove('hidden');
@@ -1461,60 +1461,60 @@ Partie 5;;;;`;
 
         this.updateCurrentCardDisplay();
 
-        // Mettre à jour la progression
+        
         this.updateProgressBar();
 
-        // Mettre à jour les statistiques
+        
         this.updateSessionStats();
 
-        // Sauvegarder la session après affichage de la carte
+        
         this.saveCurrentSession();
 
-        // Jouer l'audio automatiquement si le mode est activé
+        
         if (this.autoAudioMode) {
-            // Ajouter un petit délai pour que l'affichage soit complet
+            
             setTimeout(() => {
                 this.playArabicAudio();
             }, 500);
         }
     }
 
-    // Met à jour l'affichage de la carte actuelle selon le mode
+    
     updateCurrentCardDisplay() {
         const card = this.srs.getCurrentCard();
         if (!card) return;
 
-        // Retirer l'indicateur de mode existant s'il existe
+        
         const existingIndicator = this.elements.flashcard.querySelector('.card-mode-indicator');
         if (existingIndicator) {
             existingIndicator.remove();
         }
 
-        // Retirer l'indicateur de répétition existant s'il existe
+        
         const existingRepeatIndicator = this.elements.flashcard.querySelector('.card-repeat-indicator');
         if (existingRepeatIndicator) {
             existingRepeatIndicator.remove();
         }
 
-        // Retirer l'indicateur de révision intensive existant s'il existe
+        
         const existingIntensiveIndicator = this.elements.flashcard.querySelector('.card-intensive-indicator');
         if (existingIntensiveIndicator) {
             existingIntensiveIndicator.remove();
         }
 
-        // Retirer l'indicateur de révision ancienne existant s'il existe
+        
         const existingOldIndicator = this.elements.flashcard.querySelector('.card-old-indicator');
         if (existingOldIndicator) {
             existingOldIndicator.remove();
         }
 
-        // Ajouter l'indicateur de mode
+        
         const modeIndicator = document.createElement('div');
         modeIndicator.className = `card-mode-indicator ${this.reverseMode ? 'reverse' : ''}`;
         modeIndicator.textContent = this.reverseMode ? 'FR → AR' : 'AR → FR';
         this.elements.flashcard.appendChild(modeIndicator);
 
-        // Ajouter l'indicateur de révision intensive si c'est le cas
+        
         if (this.isIntensiveReview) {
             const intensiveIndicator = document.createElement('div');
             intensiveIndicator.className = 'card-intensive-indicator';
@@ -1522,7 +1522,7 @@ Partie 5;;;;`;
             this.elements.flashcard.appendChild(intensiveIndicator);
         }
 
-        // Ajouter l'indicateur de révision des chiffres si c'est le cas
+        
         if (this.isNumbersReview) {
             const numbersIndicator = document.createElement('div');
             numbersIndicator.className = 'card-numbers-indicator';
@@ -1530,7 +1530,7 @@ Partie 5;;;;`;
             this.elements.flashcard.appendChild(numbersIndicator);
         }
 
-        // Ajouter l'indicateur de répétition si la carte revient
+        
         if (card.needsReview) {
             const repeatIndicator = document.createElement('div');
             repeatIndicator.className = 'card-repeat-indicator';
@@ -1539,16 +1539,16 @@ Partie 5;;;;`;
         }
 
         if (this.reverseMode && !this.isNumbersReview) {
-            // Mode inversé : afficher la traduction française (sauf pour les chiffres)
+            
             this.elements.arabicText.textContent = card.translation;
             this.elements.arabicText.classList.add('reverse-mode');
         } else {
-            // Mode normal : afficher l'arabe (ou le chiffre arabe)
+            
             this.elements.arabicText.textContent = card.arabic;
             this.elements.arabicText.classList.remove('reverse-mode');
         }
 
-        // Affichage spécial pour les chiffres
+        
         if (this.isNumbersReview) {
             this.elements.arabicText.classList.add('arabic-number-display');
         } else {
@@ -1559,13 +1559,13 @@ Partie 5;;;;`;
             `${card.niveau} - ${card.partie}` : 
             `${card.type} - ${card.niveau}`;
         
-        // Indicateur de difficulté
+        
         const failureRate = card.progress.attempts > 0 ? 
             Math.round((card.progress.failures / card.progress.attempts) * 100) : 0;
         this.elements.difficultyIndicator.textContent = `Échecs: ${failureRate}%`;
     }
 
-    // Révèle la réponse
+    
     revealAnswer() {
         const card = this.srs.getCurrentCard();
         
@@ -1573,16 +1573,16 @@ Partie 5;;;;`;
         document.querySelector('.card-back').classList.remove('hidden');
 
         if (this.reverseMode && !this.isNumbersReview) {
-            // Mode inversé : montrer l'arabe comme réponse (sauf pour les chiffres)
+            
             this.elements.translationText.textContent = card.arabic;
             this.elements.translationText.classList.add('reverse-mode');
         } else {
-            // Mode normal : montrer la traduction française (ou le chiffre occidental)
+            
             this.elements.translationText.textContent = card.translation;
             this.elements.translationText.classList.remove('reverse-mode');
         }
 
-        // Informations supplémentaires selon le type
+        
         if (card.type === 'numbers') {
             this.elements.additionalInfo.innerHTML = `
                 <div class="number-info">
@@ -1626,72 +1626,72 @@ Partie 5;;;;`;
         this.elements.revealBtn.classList.add('hidden');
         this.elements.answerButtons.classList.remove('hidden');
         
-        // Marquer que la carte est révélée et sauvegarder
+        
         this.srs.isCardRevealed = true;
         this.saveCurrentSession();
     }
 
-    // Répond à une carte
+    
     answerCard(score) {
         const card = this.srs.getCurrentCard();
         
-        // Mettre à jour la progression
+        
         this.srs.updateCardProgress(card.id, score);
 
-        // Mettre à jour les statistiques de session
+        
         this.srs.sessionStats.totalAttempts++;
         
         if (score === 0) {
             this.srs.sessionStats.incorrect++;
-            // Carte incorrecte : la remettre en fin de pile
+            
             this.srs.addFailedCardToEnd(card);
         } else if (score === 1) {
             this.srs.sessionStats.difficult++;
-            // Carte difficile : la remettre en fin de pile aussi
+            
             this.srs.addFailedCardToEnd(card);
         } else {
-            // Carte réussie (score >= 2)
+            
             if (!card.needsReview) {
                 this.srs.sessionStats.correct++;
             }
             
-            // Marquer la carte comme terminée pour les bonnes réponses
-            // En mode répétition ET en session principale
+            
+            
             if (!card.countedInTotal) {
                 this.srs.sessionStats.total++;
                 card.countedInTotal = true;
             }
-            // Carte réussie : ne pas la remettre
+            
         }
 
-        // Réinitialiser l'état de révélation
+        
         this.srs.isCardRevealed = false;
 
-        // Passer à la carte suivante
+        
         if (this.srs.nextCard()) {
             setTimeout(() => this.showNextCard(), 300);
         } else {
             this.showResults();
         }
         
-        // Mettre à jour les statistiques globales si on est sur l'écran de sélection et que les stats sont visibles
+        
         if (!this.elements.statsContent.classList.contains('hidden')) {
             this.updateStatsDisplay();
         }
     }
 
-    // Met à jour la barre de progression basée sur les bonnes réponses uniquement
+    
     updateProgressBar() {
         const uniqueCardsTotal = this.filteredData.length;
         
-        // En mode répétition, utiliser le nombre de cartes correctes
-        // En mode session principale, utiliser le total de cartes terminées (qui ne s'incrémente que pour les bonnes réponses)
+        
+        
         let completedCards;
         if (this.isOldWordsReview && !this.isOldWordsMainSession) {
-            // Mode répétition : progression basée sur les cartes correctes
+            
             completedCards = this.srs.sessionStats.correct;
         } else {
-            // Session principale : progression basée sur les cartes terminées (bonnes réponses uniquement)
+            
             completedCards = this.srs.sessionStats.total;
         }
         
@@ -1699,7 +1699,7 @@ Partie 5;;;;`;
         
         this.elements.progressFill.style.width = `${progress}%`;
         
-        // Texte différent selon le mode
+        
         if (this.isIntensiveReview) {
             this.elements.progressText.textContent = `${completedCards} / ${uniqueCardsTotal} cartes difficiles maîtrisées`;
         } else if (this.isOldWordsReview) {
@@ -1714,21 +1714,21 @@ Partie 5;;;;`;
             this.elements.progressText.textContent = `${completedCards} / ${uniqueCardsTotal} cartes maîtrisées`;
         }
 
-        // Afficher aussi le nombre total d'essais si différent
+        
         const totalAttempts = this.srs.sessionStats.totalAttempts;
         if (totalAttempts > completedCards) {
             this.elements.progressText.textContent += ` (${totalAttempts} essais)`;
         }
     }
 
-    // Met à jour les statistiques de session
+    
     updateSessionStats() {
         this.elements.correctCount.textContent = this.srs.sessionStats.correct;
         this.elements.difficultCount.textContent = this.srs.sessionStats.difficult;
         this.elements.incorrectCount.textContent = this.srs.sessionStats.incorrect;
     }
 
-    // Affiche les résultats
+    
     showResults() {
         const stats = this.srs.sessionStats;
         const score = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
@@ -1737,13 +1737,13 @@ Partie 5;;;;`;
         this.elements.finalTotal.textContent = stats.total;
         this.elements.finalScore.textContent = `${score}%`;
 
-        // Gestion spéciale pour la révision des mots anciens
+        
         if (this.isOldWordsReview) {
             if (this.isOldWordsMainSession) {
-                // Session principale : gérer la fin de série
+                
                 this.handleOldWordsSeriesEnd();
             } else {
-                // Répétition : gérer la fin de répétition
+                
                 this.handleFailedWordsRepetitionEnd();
             }
         } else {
@@ -1751,42 +1751,42 @@ Partie 5;;;;`;
         }
     }
 
-    // Gère la fin d'une série de mots anciens
+    
     handleOldWordsSeriesEnd() {
-        // Parcourir les cartes pour identifier les réussies et les ratées
+        
         this.srs.currentSessionCards.forEach(card => {
             const cardId = card.id || this.srs.generateCardId(card);
             const wasCorrect = this.srs.progress[cardId] && this.srs.progress[cardId].wasCorrect;
             
             if (!wasCorrect) {
-                // Mot raté : l'ajouter à la liste 3
+                
                 this.oldWordsList3.push(card);
             }
-            // Les mots réussis sont automatiquement retirés de la liste 1 
-            // car ils ont été spliced lors de la préparation de la série
+            
+            
         });
 
-        // Afficher les résultats avec un message spécial
+        
         this.showScreen('results');
         
-        // Ajouter un message indiquant la fin de série
+        
         setTimeout(() => {
             if (this.oldWordsList3.length > 0) {
                 const message = `Série terminée !\n\n${this.oldWordsList3.length} mot(s) à répéter avant de continuer.\n\nCliquez sur "Répéter les mots ratés" pour commencer la répétition.`;
-                // alert(message);
                 
-                // Ajouter un bouton pour répéter les mots ratés
+                
+                
                 this.addRepeatFailedWordsButton();
             } else {
                 const message = `Série terminée avec succès !\n\nTous les mots ont été réussis.\n\nCliquez sur "Retour au menu" pour continuer ou réviser une nouvelle série.`;
-                // alert(message);
+                
             }
         }, 100);
     }
 
-    // Ajoute un bouton pour répéter les mots ratés
+    
     addRepeatFailedWordsButton() {
-        // Vérifier si le bouton existe déjà
+        
         if (document.getElementById('repeat-failed-btn')) {
             return;
         }
@@ -1799,20 +1799,20 @@ Partie 5;;;;`;
             repeatBtn.textContent = `Répéter les mots ratés (${this.oldWordsList3.length})`;
             repeatBtn.onclick = () => this.startFailedWordsRepetition();
             
-            // Insérer le bouton avant le bouton "Retour au menu"
+            
             const returnBtn = resultsActions.querySelector('button:last-child');
             resultsActions.insertBefore(repeatBtn, returnBtn);
         }
     }
 
-    // Démarre la répétition des mots ratés (liste 3)
+    
     startFailedWordsRepetition() {
         if (this.oldWordsList3.length === 0) {
             alert('Aucun mot à répéter !');
             return;
         }
 
-        // Préparer le SRS avec la liste 3
+        
         this.srs.cards = [];
         this.srs.remainingCards = [...this.oldWordsList3];
         this.srs.currentSessionCards = [];
@@ -1822,11 +1822,11 @@ Partie 5;;;;`;
             this.srs.addCard({...card});
         });
 
-        // Préparer l'affichage
+        
         this.filteredData = this.oldWordsList3;
         this.totalOldWordsAvailable = this.oldWordsList3.length;
         
-        // Réinitialiser les statistiques de session
+        
         this.srs.sessionStats = {
             correct: 0,
             difficult: 0,
@@ -1835,33 +1835,33 @@ Partie 5;;;;`;
             totalAttempts: 0
         };
 
-        // Marquer que c'est une répétition (pas session principale)
+        
         this.isOldWordsMainSession = false;
 
         this.showScreen('revision');
         this.showNextCard();
     }
 
-    // Affiche un écran spécifique
+    
     showScreen(screenName) {
-        // Nettoyer les boutons temporaires
+        
         this.cleanupTemporaryButtons();
         
-        // Réinitialiser les modes de révision quand on revient à la sélection
+        
         if (screenName === 'selection') {
             this.isIntensiveReview = false;
             this.isOldWordsReview = false;
             this.isNumbersReview = false;
             this.isOldWordsMainSession = false;
-            // Réinitialiser aussi la sélection personnalisée
+            
             this.customSelectedWords.clear();
-            // Nettoyer les listes de mots anciens
+            
             this.oldWordsList1 = [];
             this.oldWordsList2 = [];
             this.oldWordsList3 = [];
-            // Nettoyer la sauvegarde de session
+            
             localStorage.removeItem('arabicVocabSession');
-            // Mettre à jour les statistiques si elles sont visibles
+            
             if (!this.elements.statsContent.classList.contains('hidden')) {
                 this.updateStatsDisplay();
             }
@@ -1873,7 +1873,7 @@ Partie 5;;;;`;
         this.screens[screenName].classList.add('active');
     }
 
-    // Nettoie les boutons temporaires
+    
     cleanupTemporaryButtons() {
         const tempButtons = ['repeat-failed-btn', 'continue-series-btn'];
         tempButtons.forEach(buttonId => {
@@ -1884,26 +1884,26 @@ Partie 5;;;;`;
         });
     }
 
-    // Configure la sauvegarde automatique
+    
     setupAutoSave() {
-        // Sauvegarder lors de la fermeture de la page
+        
         window.addEventListener('beforeunload', () => {
             this.saveCurrentSession();
         });
         
-        // Sauvegarder lors de la perte de focus (changement d'application)
+        
         window.addEventListener('blur', () => {
             this.saveCurrentSession();
         });
         
-        // Sauvegarder lors de la visibilité cachée (mobile)
+        
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.saveCurrentSession();
             }
         });
         
-        // Sauvegarder périodiquement toutes les 30 secondes pendant une session
+        
         setInterval(() => {
             if (this.isInSession()) {
                 this.saveCurrentSession();
@@ -1911,16 +1911,16 @@ Partie 5;;;;`;
         }, 30000);
     }
 
-    // Vérifie si on est dans une session active
+    
     isInSession() {
         return this.screens.revision.classList.contains('active') || 
                this.screens.results.classList.contains('active');
     }
 
-    // Sauvegarde la session actuelle
+    
     saveCurrentSession() {
         if (!this.isInSession()) {
-            // Pas de session active, nettoyer la sauvegarde
+            
             localStorage.removeItem('arabicVocabSession');
             return;
         }
@@ -1929,18 +1929,18 @@ Partie 5;;;;`;
             timestamp: Date.now(),
             currentScreen: this.getCurrentScreen(),
             
-            // État de la session
+            
             currentType: this.currentType,
             reverseMode: this.reverseMode,
             autoAudioMode: this.autoAudioMode,
             
-            // Modes spéciaux
+            
             isIntensiveReview: this.isIntensiveReview,
             isOldWordsReview: this.isOldWordsReview,
             isNumbersReview: this.isNumbersReview,
             isOldWordsMainSession: this.isOldWordsMainSession,
             
-            // Données de révision
+            
             filteredData: this.filteredData,
             selectedFilters: {
                 parties: Array.from(this.selectedFilters.parties)
@@ -1948,12 +1948,12 @@ Partie 5;;;;`;
             customSelectedWords: Array.from(this.customSelectedWords),
             numbersData: this.numbersData,
             
-            // Listes des mots anciens
+            
             oldWordsList1: this.oldWordsList1,
             oldWordsList2: this.oldWordsList2,
             oldWordsList3: this.oldWordsList3,
             
-            // État SRS
+            
             srsState: {
                 cards: this.srs.cards,
                 remainingCards: this.srs.remainingCards,
@@ -1963,7 +1963,7 @@ Partie 5;;;;`;
                 isCardRevealed: this.srs.isCardRevealed
             },
             
-            // Interface
+            
             currentCardData: this.getCurrentCardDisplayData()
         };
 
@@ -1971,7 +1971,7 @@ Partie 5;;;;`;
         console.log('Session sauvegardée automatiquement');
     }
 
-    // Obtient l'écran actuel
+    
     getCurrentScreen() {
         for (const [name, screen] of Object.entries(this.screens)) {
             if (screen.classList.contains('active')) {
@@ -1981,7 +1981,7 @@ Partie 5;;;;`;
         return 'selection';
     }
 
-    // Obtient les données d'affichage de la carte actuelle
+    
     getCurrentCardDisplayData() {
         if (!this.isInSession()) return null;
         
@@ -2002,7 +2002,7 @@ Partie 5;;;;`;
         };
     }
 
-    // Restaure une session sauvegardée
+    
     restoreSession() {
         const savedSession = localStorage.getItem('arabicVocabSession');
         if (!savedSession) return;
@@ -2010,16 +2010,16 @@ Partie 5;;;;`;
         try {
             const sessionData = JSON.parse(savedSession);
             
-            // Vérifier que la session n'est pas trop ancienne (max 24h)
+            
             const sessionAge = Date.now() - sessionData.timestamp;
-            const maxAge = 24 * 60 * 60 * 1000; // 24 heures
+            const maxAge = 24 * 60 * 60 * 1000; 
             
             if (sessionAge > maxAge) {
                 localStorage.removeItem('arabicVocabSession');
                 return;
             }
 
-            // Proposer de restaurer la session
+            
             const shouldRestore = confirm(
                 'Une session de révision interrompue a été détectée.\n\n' +
                 'Voulez-vous reprendre où vous vous êtes arrêté(e) ?'
@@ -2037,33 +2037,33 @@ Partie 5;;;;`;
         }
     }
 
-    // Effectue la restauration de session
+    
     doRestoreSession(sessionData) {
         console.log('Restauration de la session...');
 
-        // Restaurer l'état de base
+        
         this.currentType = sessionData.currentType;
         this.reverseMode = sessionData.reverseMode;
         this.autoAudioMode = sessionData.autoAudioMode;
         
-        // Restaurer les modes spéciaux
+        
         this.isIntensiveReview = sessionData.isIntensiveReview;
         this.isOldWordsReview = sessionData.isOldWordsReview;
         this.isNumbersReview = sessionData.isNumbersReview;
         this.isOldWordsMainSession = sessionData.isOldWordsMainSession;
         
-        // Restaurer les données
+        
         this.filteredData = sessionData.filteredData || [];
         this.selectedFilters.parties = new Set(sessionData.selectedFilters?.parties || []);
         this.customSelectedWords = new Set(sessionData.customSelectedWords || []);
         this.numbersData = sessionData.numbersData || [];
         
-        // Restaurer les listes des mots anciens
+        
         this.oldWordsList1 = sessionData.oldWordsList1 || [];
         this.oldWordsList2 = sessionData.oldWordsList2 || [];
         this.oldWordsList3 = sessionData.oldWordsList3 || [];
         
-        // Restaurer l'état SRS
+        
         if (sessionData.srsState) {
             this.srs.cards = sessionData.srsState.cards || [];
             this.srs.remainingCards = sessionData.srsState.remainingCards || [];
@@ -2075,18 +2075,18 @@ Partie 5;;;;`;
             this.srs.isCardRevealed = sessionData.srsState.isCardRevealed || false;
         }
 
-        // Restaurer l'interface
+        
         this.restoreInterface(sessionData);
         
-        // Afficher l'écran approprié
+        
         this.showScreen(sessionData.currentScreen || 'revision');
         
         console.log('Session restaurée avec succès');
     }
 
-    // Restaure l'interface utilisateur
+    
     restoreInterface(sessionData) {
-        // Restaurer les toggles
+        
         if (this.elements.reverseModeToggle) {
             this.elements.reverseModeToggle.checked = this.reverseMode;
         }
@@ -2094,16 +2094,16 @@ Partie 5;;;;`;
             this.elements.autoAudioToggle.checked = this.autoAudioMode;
         }
 
-        // Restaurer l'affichage de la carte si on est en révision
+        
         if (sessionData.currentCardData && sessionData.currentScreen === 'revision') {
             this.restoreCardDisplay(sessionData.currentCardData);
         }
 
-        // Restaurer les statistiques de session
+        
         this.updateSessionStats();
     }
 
-    // Restaure l'affichage de la carte
+    
     restoreCardDisplay(cardData) {
         if (!cardData) return;
 
@@ -2113,7 +2113,7 @@ Partie 5;;;;`;
         this.elements.additionalInfo.textContent = cardData.additionalInfo || '';
         this.elements.progressText.textContent = cardData.progressText || '';
 
-        // Restaurer l'état révélé/caché
+        
         if (cardData.isRevealed) {
             this.elements.cardBack.classList.remove('hidden');
             this.elements.revealBtn.classList.add('hidden');
@@ -2124,16 +2124,16 @@ Partie 5;;;;`;
             this.elements.answerButtons.classList.add('hidden');
         }
 
-        // Mettre à jour la barre de progression
+        
         this.updateProgressBar();
     }
 
-    // Démarre la révision des cartes difficiles
+    
     startDifficultCardsReview() {
-        // Obtenir toutes les cartes de tous les types
+        
         const allCards = [...this.vocabularyData.mots, ...this.vocabularyData.verbes];
         
-        // Créer d'abord les cartes avec leurs IDs pour avoir accès aux données de progression
+        
         const cardsWithIds = [];
         allCards.forEach(card => {
             const cardId = this.srs.generateCardId(card);
@@ -2146,10 +2146,10 @@ Partie 5;;;;`;
             }
         });
 
-        // Initialiser la session avec les cartes difficiles
+        
         const difficultCardsCount = this.srs.initializeDifficultCardsSession(cardsWithIds);
         
-        // Debug: afficher des informations
+        
         console.log('Cartes avec progression:', cardsWithIds.length);
         console.log('Cartes difficiles trouvées:', difficultCardsCount);
         if (cardsWithIds.length > 0) {
@@ -2161,16 +2161,16 @@ Partie 5;;;;`;
             return;
         }
 
-        // Ajouter les cartes difficiles au système SRS
+        
         this.srs.cards = [];
         this.srs.remainingCards.forEach(card => {
             this.srs.addCard({...card});
         });
 
-        // Préparer l'affichage
+        
         this.filteredData = this.srs.remainingCards;
         
-        // Réinitialiser les statistiques de session
+        
         this.srs.sessionStats = {
             correct: 0,
             difficult: 0,
@@ -2179,24 +2179,24 @@ Partie 5;;;;`;
             totalAttempts: 0
         };
 
-        // Marquer que c'est une session de révision intensive
+        
         this.isIntensiveReview = true;
 
         this.showScreen('revision');
         this.showNextCard();
     }
 
-    // Méthode appelée depuis les résultats pour réviser les cartes difficiles
+    
     startDifficultCardsReviewFromResults() {
         this.startDifficultCardsReview();
     }
 
-    // Initialise le système de gestion des trois listes pour les mots anciens
+    
     initializeOldWordsListSystem() {
-        // Obtenir toutes les cartes de tous les types
+        
         const allCards = [...this.vocabularyData.mots, ...this.vocabularyData.verbes];
         
-        // Créer les cartes avec leurs IDs pour avoir accès aux données de progression
+        
         const cardsWithIds = [];
         allCards.forEach(card => {
             const cardId = this.srs.generateCardId(card);
@@ -2209,21 +2209,21 @@ Partie 5;;;;`;
             }
         });
 
-        // Liste 1 : tous les mots anciens (filtrés selon les critères)
-        this.oldWordsList1 = this.srs.getOldCards(cardsWithIds, 1000); // Pas de limite pour la liste 1
         
-        // Liste 2 : 7 mots sélectionnés pour la session (vide au début)
+        this.oldWordsList1 = this.srs.getOldCards(cardsWithIds, 1000); 
+        
+        
         this.oldWordsList2 = [];
         
-        // Liste 3 : mots ratés à répéter (vide au début)
+        
         this.oldWordsList3 = [];
         
         return this.oldWordsList1.length;
     }
 
-    // Démarre la révision des mots anciens
+    
     startOldWordsReview() {
-        // Initialiser le système des trois listes
+        
         const totalOldWords = this.initializeOldWordsListSystem();
         
         if (totalOldWords === 0) {
@@ -2232,30 +2232,30 @@ Partie 5;;;;`;
             return;
         }
 
-        // Préparer la première série de 7 mots
+        
         this.prepareNextOldWordsSeries();
     }
 
-    // Prépare la prochaine série de 7 mots depuis la liste 1
+    
     prepareNextOldWordsSeries() {
         if (this.oldWordsList1.length === 0) {
-            // Plus de mots anciens à réviser
+            
             alert('Tous les mots anciens ont été révisés ! Retour au menu.');
             this.showScreen('selection');
             return;
         }
 
-        // Prendre les 7 premiers mots de la liste 1 (ou moins s'il en reste moins)
+        
         const wordsToTake = Math.min(7, this.oldWordsList1.length);
         this.oldWordsList2 = this.oldWordsList1.splice(0, wordsToTake);
         
-        // Mélanger la liste 2
+        
         this.oldWordsList2 = this.srs.shuffleArray(this.oldWordsList2);
         
-        // Vider la liste 3 pour cette nouvelle série
+        
         this.oldWordsList3 = [];
         
-        // Préparer le SRS avec la liste 2
+        
         this.srs.cards = [];
         this.srs.remainingCards = [...this.oldWordsList2];
         this.srs.currentSessionCards = [];
@@ -2265,11 +2265,11 @@ Partie 5;;;;`;
             this.srs.addCard({...card});
         });
 
-        // Préparer l'affichage
+        
         this.filteredData = this.oldWordsList2;
         this.totalOldWordsAvailable = this.oldWordsList2.length;
         
-        // Réinitialiser les statistiques de session
+        
         this.srs.sessionStats = {
             correct: 0,
             difficult: 0,
@@ -2278,20 +2278,20 @@ Partie 5;;;;`;
             totalAttempts: 0
         };
 
-        // Marquer que c'est une session de révision des mots anciens
+        
         this.isOldWordsReview = true;
-        this.isOldWordsMainSession = true; // Session principale (pas répétition)
+        this.isOldWordsMainSession = true; 
 
         this.showScreen('revision');
         this.showNextCard();
     }
 
-    // Méthode appelée depuis les résultats pour réviser les mots anciens
+    
     startOldWordsReviewFromResults() {
         this.startOldWordsReview();
     }
 
-    // Bascule l'affichage des statistiques
+    
     toggleStats() {
         const isHidden = this.elements.statsContent.classList.contains('hidden');
         
@@ -2305,7 +2305,7 @@ Partie 5;;;;`;
         }
     }
 
-    // Met à jour l'affichage des statistiques
+    
     updateStatsDisplay() {
         const progress = this.srs.progress;
         let totalAttempts = 0;
@@ -2314,13 +2314,13 @@ Partie 5;;;;`;
         let difficultCards = 0;
         let masteredCards = 0;
 
-        // Parcourir toutes les cartes dans les données de progression
+        
         Object.values(progress).forEach(cardProgress => {
             totalAttempts += cardProgress.attempts;
             totalSuccesses += cardProgress.successes;
             totalFailures += cardProgress.failures;
 
-            // Carte difficile si taux d'échec > 50%
+            
             if (cardProgress.attempts > 0) {
                 const failureRate = cardProgress.failures / cardProgress.attempts;
                 if (failureRate > 0.5) {
@@ -2328,7 +2328,7 @@ Partie 5;;;;`;
                 }
             }
 
-            // Carte maîtrisée si taux de réussite > 80% et au moins 5 tentatives
+            
             if (cardProgress.attempts >= 5) {
                 const successRate = cardProgress.successes / cardProgress.attempts;
                 if (successRate > 0.8) {
@@ -2337,10 +2337,10 @@ Partie 5;;;;`;
             }
         });
 
-        // Calculer le taux de réussite global
+        
         const successRate = totalAttempts > 0 ? Math.round((totalSuccesses / totalAttempts) * 100) : 0;
 
-        // Mettre à jour l'affichage
+        
         this.elements.totalAttempts.textContent = totalAttempts;
         this.elements.totalSuccesses.textContent = totalSuccesses;
         this.elements.totalFailures.textContent = totalFailures;
@@ -2349,7 +2349,7 @@ Partie 5;;;;`;
         this.elements.masteredCards.textContent = masteredCards;
     }
 
-    // Réinitialise les statistiques
+    
     resetStats() {
         const confirmReset = confirm(
             '⚠️ Attention !\n\n' +
@@ -2362,11 +2362,11 @@ Partie 5;;;;`;
         );
 
         if (confirmReset) {
-            // Effacer les données de progression
+            
             this.srs.progress = {};
             this.srs.saveProgress();
             
-            // Recharger toutes les cartes pour réinitialiser leurs données de progression
+            
             if (this.vocabularyData.mots.length > 0 || this.vocabularyData.verbes.length > 0) {
                 this.srs.cards = [];
                 [...this.vocabularyData.mots, ...this.vocabularyData.verbes].forEach(card => {
@@ -2374,23 +2374,23 @@ Partie 5;;;;`;
                 });
             }
 
-            // Mettre à jour l'affichage des statistiques
+            
             this.updateStatsDisplay();
 
             alert('✅ Statistiques réinitialisées avec succès !');
         }
     }
 
-    // ==========================================
-    // Méthodes pour l'audio (ResponsiveVoice)
-    // ==========================================
+    
+    
+    
 
-    // Joue l'audio du texte arabe uniquement
+    
     playArabicAudio() {
         const card = this.srs.getCurrentCard();
         if (!card) return;
 
-        // Toujours lire le texte arabe, peu importe le mode
+        
         const textToSpeak = card.arabic;
         const voiceName = 'Arabic Male';
         const language = 'ar-SA';
@@ -2398,26 +2398,26 @@ Partie 5;;;;`;
         this.playAudio(textToSpeak, voiceName, language, this.elements.arabicAudioBtn);
     }
 
-    // Méthode utilitaire pour jouer l'audio avec ResponsiveVoice
+    
     playAudio(text, voiceName, language, buttonElement) {
-        // Vérifier si ResponsiveVoice est disponible
+        
         if (typeof responsiveVoice === 'undefined') {
             console.warn('ResponsiveVoice n\'est pas chargé. Utilisez votre propre clé API.');
             alert('🔊 Fonctionnalité audio non disponible.\nVeuillez obtenir une clé API ResponsiveVoice et la configurer.');
             return;
         }
 
-        // Arrêter tout audio en cours
+        
         responsiveVoice.cancel();
 
-        // Ajouter l'animation au bouton
+        
         buttonElement.classList.add('playing');
 
-        // Jouer l'audio
+        
         responsiveVoice.speak(text, voiceName, {
-            rate: 0.8, // Vitesse de lecture (0.1 à 1.5)
-            pitch: 1, // Hauteur de la voix (0 à 2)
-            volume: 1, // Volume (0 à 1)
+            rate: 0.8, 
+            pitch: 1, 
+            volume: 1, 
             onstart: () => {
                 console.log(`🔊 Lecture audio démarrée: ${text}`);
             },
@@ -2428,18 +2428,18 @@ Partie 5;;;;`;
             onerror: (error) => {
                 console.error('Erreur audio:', error);
                 buttonElement.classList.remove('playing');
-                // Fallback vers d'autres voix disponibles
+                
                 this.playAudioFallback(text, language, buttonElement);
             }
         });
     }
 
-    // Méthode de fallback avec des voix alternatives
+    
     playAudioFallback(text, language, buttonElement) {
         let fallbackVoice;
         
         if (language.startsWith('ar')) {
-            // Voix arabes alternatives
+            
             fallbackVoice = 'Arabic Female';
         }
 
@@ -2459,13 +2459,13 @@ Partie 5;;;;`;
         }
     }
 
-    // ==========================================
-    // Méthodes pour la révision personnalisée
-    // ==========================================
+    
+    
+    
 
-    // Initialise l'interface de sélection personnalisée
+    
     initializeCustomSelection() {
-        // Réinitialiser les sélections
+        
         this.customSelectedWords.clear();
         this.elements.customTypeSelect.value = '';
         this.elements.customThemeSelect.value = '';
@@ -2475,7 +2475,7 @@ Partie 5;;;;`;
         this.updateCustomSelectionCount();
     }
 
-    // Gère le changement de type dans la sélection personnalisée
+    
     handleCustomTypeChange() {
         const selectedType = this.elements.customTypeSelect.value;
         
@@ -2485,17 +2485,17 @@ Partie 5;;;;`;
             return;
         }
 
-        // Afficher le sélecteur de thématique
+        
         this.elements.customThemeContainer.classList.remove('hidden');
         this.populateCustomThemes(selectedType);
         
-        // Masquer les mots et réinitialiser
+        
         this.elements.customWordsContainer.classList.add('hidden');
         this.customSelectedWords.clear();
         this.updateCustomSelectionCount();
     }
 
-    // Remplit les thématiques pour le type sélectionné
+    
     populateCustomThemes(type) {
         const data = this.vocabularyData[type];
         const themes = new Set();
@@ -2505,7 +2505,7 @@ Partie 5;;;;`;
             themes.add(themeKey);
         });
 
-        // Vider et remplir le sélecteur de thématiques
+        
         this.elements.customThemeSelect.innerHTML = '<option value="">-- Choisir une thématique --</option>';
         
         Array.from(themes).sort().forEach(theme => {
@@ -2516,7 +2516,7 @@ Partie 5;;;;`;
         });
     }
 
-    // Gère le changement de thématique
+    
     handleCustomThemeChange() {
         const selectedType = this.elements.customTypeSelect.value;
         const selectedTheme = this.elements.customThemeSelect.value;
@@ -2526,33 +2526,33 @@ Partie 5;;;;`;
             return;
         }
 
-        // Afficher les mots
+        
         this.elements.customWordsContainer.classList.remove('hidden');
         this.populateCustomWords(selectedType, selectedTheme);
         
-        // Réinitialiser les sélections
+        
         this.customSelectedWords.clear();
         this.updateCustomSelectionCount();
     }
 
-    // Remplit les mots pour le type et la thématique sélectionnés
+    
     populateCustomWords(type, theme) {
         const [niveau, thematique] = theme.split(' - ');
         const data = this.vocabularyData[type].filter(item => 
             item.niveau === niveau && item.thematique === thematique
         );
 
-        // Vider la grille
+        
         this.elements.customWordsGrid.innerHTML = '';
 
-        // Créer les cases à cocher pour chaque mot
+        
         data.forEach(word => {
             const wordCheckbox = this.createCustomWordCheckbox(word);
             this.elements.customWordsGrid.appendChild(wordCheckbox);
         });
     }
 
-    // Crée une case à cocher pour un mot personnalisé
+    
     createCustomWordCheckbox(word) {
         const label = document.createElement('label');
         label.className = 'word-checkbox';
@@ -2596,7 +2596,7 @@ Partie 5;;;;`;
         return label;
     }
 
-    // Gère le changement d'un mot personnalisé
+    
     handleCustomWordChange(word, checked) {
         const wordId = this.srs.generateCardId(word);
         
@@ -2609,7 +2609,7 @@ Partie 5;;;;`;
         this.updateCustomSelectionCount();
     }
 
-    // Met à jour le compteur de sélection personnalisée
+    
     updateCustomSelectionCount() {
         const count = this.customSelectedWords.size;
         
@@ -2622,17 +2622,17 @@ Partie 5;;;;`;
         }
     }
 
-    // Démarre la révision personnalisée
+    
     startCustomRevision() {
         if (this.customSelectedWords.size === 0) {
             alert('Veuillez sélectionner au moins un mot !');
             return;
         }
 
-        // Obtenir tous les mots de tous les types
+        
         const allWords = [...this.vocabularyData.mots, ...this.vocabularyData.verbes];
         
-        // Filtrer pour ne garder que les mots sélectionnés
+        
         this.filteredData = allWords.filter(word => {
             const wordId = this.srs.generateCardId(word);
             return this.customSelectedWords.has(wordId);
@@ -2640,59 +2640,59 @@ Partie 5;;;;`;
 
         console.log('Mots sélectionnés pour révision personnalisée:', this.filteredData.length);
 
-        // Initialiser le système de révision
+        
         this.srs.cards = [];
         this.filteredData.forEach(item => this.srs.addCard(item));
         
-        // Démarrer une session avec ordre aléatoire
+        
         this.srs.resetSession();
 
-        // Marquer que ce n'est pas une révision intensive
+        
         this.isIntensiveReview = false;
 
         this.showScreen('revision');
         this.showNextCard();
     }
 
-    // Redémarre la session actuelle en gardant le même type et les mêmes filtres
+    
     restartCurrentSession() {
-        // Déterminer le type de session à redémarrer
+        
         if (this.isIntensiveReview) {
-            // Redémarrer une révision intensive
+            
             this.startDifficultCardsReview();
         } else if (this.isOldWordsReview) {
-            // Redémarrer une révision des mots anciens
+            
             this.startOldWordsReview();
         } else if (this.isNumbersReview) {
-            // Redémarrer l'entraînement aux chiffres
+            
             this.startNumbersReview();
         } else if (this.customSelectedWords && this.customSelectedWords.size > 0) {
-            // Redémarrer une révision personnalisée
+            
             this.startCustomRevision();
         } else {
-            // Redémarrer une révision normale
+            
             this.startRevision();
         }
     }
 
-    // ==========================================
-    // Méthodes pour l'entraînement aux chiffres
-    // ==========================================
+    
+    
+    
 
-    // Met à jour l'aperçu des chiffres
+    
     updateNumbersPreview() {
         const difficulty = this.elements.numbersDifficulty.value;
         const count = this.elements.numbersCount.value;
         
-        // Générer un exemple de chiffre
+        
         const exampleNumber = this.arabicNumbers.generateRandomNumber(difficulty);
         const arabicDisplay = this.arabicNumbers.toArabic(exampleNumber);
         
-        // Mettre à jour l'aperçu
+        
         document.getElementById('preview-number').textContent = arabicDisplay;
         document.querySelector('.french-number').textContent = exampleNumber;
         
-        // Mettre à jour le texte de sélection
+        
         let difficultyText = '';
         switch (difficulty) {
             case '1':
@@ -2712,15 +2712,15 @@ Partie 5;;;;`;
         this.elements.numbersSelectionCount.textContent = `${count} chiffres - ${difficultyText}`;
     }
 
-    // Démarre l'entraînement aux chiffres
+    
     startNumbersReview() {
         const difficulty = this.elements.numbersDifficulty.value;
         const count = parseInt(this.elements.numbersCount.value);
         
-        // Générer les données des chiffres
+        
         this.numbersData = this.arabicNumbers.generateNumberSet(difficulty, count);
         
-        // Convertir en format compatible avec le système SRS
+        
         this.filteredData = this.numbersData.map(item => ({
             id: `number_${item.western}`,
             type: 'numbers',
@@ -2731,14 +2731,14 @@ Partie 5;;;;`;
             partie: difficulty === 'mixed' ? 'Mélange' : `${difficulty} chiffre${difficulty > 1 ? 's' : ''}`
         }));
 
-        // Initialiser le système de révision
+        
         this.srs.cards = [];
         this.filteredData.forEach(item => this.srs.addCard(item));
         
-        // Démarrer une session avec ordre aléatoire
+        
         this.srs.resetSession();
 
-        // Marquer que c'est une révision des chiffres
+        
         this.isNumbersReview = true;
 
         console.log('Démarrage de l\'entraînement aux chiffres:', this.filteredData.length, 'chiffres');
@@ -2747,22 +2747,22 @@ Partie 5;;;;`;
         this.showNextCard();
     }
 
-    // Gère la fin de répétition des mots ratés
+    
     handleFailedWordsRepetitionEnd() {
-        // Vider la liste 3 après la répétition
+        
         this.oldWordsList3 = [];
         
-        // Afficher les résultats normalement
+        
         this.showScreen('results');
         
-        // Proposer de continuer avec une nouvelle série
+        
         setTimeout(() => {
             if (this.oldWordsList1.length > 0) {
                 const message = `Répétition terminée !\n\nIl reste ${this.oldWordsList1.length} mot(s) ancien(s) à réviser.\n\nVoulez-vous continuer avec une nouvelle série de 7 mots ?`;
                 if (confirm(message)) {
                     this.prepareNextOldWordsSeries();
                 } else {
-                    // Ajouter un bouton pour continuer plus tard
+                    
                     this.addContinueSeriesButton();
                 }
             } else {
@@ -2771,9 +2771,9 @@ Partie 5;;;;`;
         }, 100);
     }
 
-    // Ajoute un bouton pour continuer une nouvelle série
+    
     addContinueSeriesButton() {
-        // Vérifier si le bouton existe déjà
+        
         if (document.getElementById('continue-series-btn')) {
             return;
         }
@@ -2786,14 +2786,14 @@ Partie 5;;;;`;
             continueBtn.textContent = `Continuer (${this.oldWordsList1.length} mots restants)`;
             continueBtn.onclick = () => this.prepareNextOldWordsSeries();
             
-            // Insérer le bouton avant le bouton "Retour au menu"
+            
             const returnBtn = resultsActions.querySelector('button:last-child');
             resultsActions.insertBefore(continueBtn, returnBtn);
         }
     }
 }
 
-// Initialiser l'application quand le DOM est chargé
+
 document.addEventListener('DOMContentLoaded', () => {
     new VocabApp();
 });

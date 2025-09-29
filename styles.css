@@ -1,4 +1,4 @@
-/* Variables CSS */
+
 :root {
     --primary-color: #785D3E;
     --secondary-color: #f59e0b;
@@ -16,14 +16,14 @@
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Reset et base */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* Classe utilitaire pour masquer les éléments */
+
 .hidden {
     display: none !important;
 }
@@ -43,7 +43,7 @@ body {
     position: relative;
 }
 
-/* Header */
+
 .header {
     text-align: center;
     padding: 2rem;
@@ -62,7 +62,7 @@ body {
     opacity: 0.9;
 }
 
-/* Écrans */
+
 .screen {
     flex: 1;
     display: none;
@@ -73,7 +73,7 @@ body {
     display: block;
 }
 
-/* Écran de sélection */
+
 .selection-container {
     max-width: 600px;
     margin: 0 auto;
@@ -371,7 +371,7 @@ body {
     transform: none;
 }
 
-/* Écran de révision */
+
 .revision-container {
     max-width: 800px;
     margin: 0 auto;
@@ -633,7 +633,7 @@ body {
     border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* Écran de résultats */
+
 .results-container {
     max-width: 600px;
     margin: 0 auto;
@@ -682,7 +682,7 @@ body {
     justify-content: center;
 }
 
-/* Mode selector toggle */
+
 .mode-selector {
     margin-bottom: 1.5rem;
     display: flex;
@@ -752,7 +752,7 @@ body {
     color: var(--success-color);
 }
 
-/* Indicateur de mode sur la carte */
+
 .card-mode-indicator {
     position: absolute;
     top: 1rem;
@@ -769,7 +769,7 @@ body {
     background: var(--success-color);
 }
 
-/* Indicateur de répétition sur la carte */
+
 .card-repeat-indicator {
     position: absolute;
     top: 1rem;
@@ -783,7 +783,7 @@ body {
     animation: pulse 2s infinite;
 }
 
-/* Indicateur de révision intensive */
+
 .card-intensive-indicator {
     position: absolute;
     top: 3.5rem;
@@ -816,7 +816,7 @@ body {
     }
 }
 
-/* Animations */
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -832,7 +832,7 @@ body {
     animation: fadeIn 0.5s ease;
 }
 
-/* Section des statistiques */
+
 .stats-section {
     background: var(--primary-color);
     border-radius: var(--border-radius);
@@ -845,7 +845,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* margin-bottom: 1rem; */
+   
 }
 
 .stats-header h3 {
@@ -959,7 +959,7 @@ body {
     transform: translateY(-1px);
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
@@ -1017,7 +1017,7 @@ body {
     }
 }
 
-/* Interface hiérarchique Niveau > Thématique > Parties */
+
 .filter-header-main {
     text-align: center;
     margin-bottom: 2rem;
@@ -1097,7 +1097,7 @@ body {
 }
 
 .thematique-section {
-    /* margin-bottom: 1.5rem; */
+   
     border: 1px solid var(--border-color);
     border-radius: 8px;
     overflow: hidden;
@@ -1230,9 +1230,7 @@ body {
     background: var(--primary-color);
 }
 
-/* ==========================================
-   Sélection personnalisée
-   ========================================== */
+
 
 .custom-selection {
     background: var(--surface);
@@ -1385,7 +1383,7 @@ body {
     border-color: white;
 }
 
-/* Responsive pour la grille de mots */
+
 @media (max-width: 768px) {
     .words-grid {
         grid-template-columns: 1fr;
@@ -1406,9 +1404,7 @@ body {
     color: white;
 }
 
-/* ==========================================
-   Boutons audio ResponsiveVoice
-   ========================================== */
+
 
 .audio-btn {
     position: absolute;
@@ -1470,7 +1466,7 @@ body {
     }
 }
 
-/* Responsive pour les boutons audio */
+
 @media (max-width: 480px) {
     .audio-btn {
         width: 35px;
@@ -1480,7 +1476,7 @@ body {
 }
 
 
-/* Scrollbar styling */
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -1507,15 +1503,13 @@ body {
     background: var(--surface);
 }
 
-/* Firefox scrollbar */
+
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--primary-color) var(--surface);
 }
 
-/* ==============================================
-   Styles pour la section des chiffres arabes
-   ============================================== */
+
 
 .numbers-selection {
     background: var(--surface);
@@ -1633,7 +1627,7 @@ body {
     box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
 }
 
-/* Media queries pour les chiffres */
+
 @media (max-width: 768px) {
     .numbers-preview-display {
         flex-direction: column;
@@ -1651,7 +1645,7 @@ body {
     }
 }
 
-/* Styles spéciaux pour l'affichage des chiffres */
+
 .arabic-number-display {
     font-family: 'Amiri', serif !important;
     font-size: 3rem !important;
